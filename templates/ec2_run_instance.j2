@@ -1,0 +1,23 @@
+#!/bin/bash
+
+/usr/local/bin/aws ec2 run-instances \
+    --associate-public-ip-address \
+    --block-device-mappings DeviceName=/dev/xvda,Ebs=\{DeleteOnTermination=true,VolumeSize=12,VolumeType=gp2,Encrypted=false\} \
+{% if random_instance_type.startswith('t3') or random_instance_type.startswith('t4g') %}
+    --credit-specification CpuCredits=standard \
+{% endif %}
+    --image-id {{ ami[arch][test_os] }} \
+    --instance-market-options MarketType=spot,SpotOptions=\{MaxPrice=0.1,SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate\} \
+    --instance-type {{ random_instance_type }} \
+    --key-name kp-bootc-{{ random_num }} \
+    --security-group-ids {{ ec2_security_group.group_id }} \
+    --subnet-id {{ ec2_vpc_subnet.subnet.id }} \
+    --tag-specifications ResourceType=instance,Tags=[\{Key=bootc-test,Value='bootc-test.{{ test_os }}.{{ arch }}'\},\{Key=name,Value='bootc-test.{{ test_os }}.{{ arch }}'\}] \
+
+return_code=$?
+if [[ $return_code == 0 ]]; then
+  exit 0
+fi
+
+# If we had no successful boots, we should exit with a failure.
+exit 1
