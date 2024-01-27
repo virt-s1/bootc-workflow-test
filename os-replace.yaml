@@ -15,8 +15,10 @@
       centos-stream-9: edge-centos-stream-9
     image_family:
       centos-stream-9: centos-stream-9
+      rhel-9-4: centos-stream-9
     image_project:
       centos-stream-9: centos-cloud
+      rhel-9-4: centos-cloud
     ami:
       x86_64:
         rhel-9-4: ami-049f8bd9ca71d1059
@@ -133,16 +135,16 @@
       block:
         - name: gcloud/gsutil - authorizing with a service account
           command:
-            /usr/bin/gcloud auth activate-service-account \
-            --key-file="{{ lookup('env', 'GCP_SERVICE_ACCOUNT_FILE') }}"
+            "/usr/bin/gcloud auth activate-service-account \
+            --key-file={{ lookup('env', 'GCP_SERVICE_ACCOUNT_FILE') }}"
 
         - name: Create gcp key file
           shell: sed "s/ssh-rsa/cloud-user:ssh-rsa/" "{{ ssh_key_pub }}" > "{{ playbook_dir }}/gcp_key"
-          when: "'centos' in test_os"
+          when: "'centos' in test_os or 'rhel' in test_os"
 
         - set_fact:
             image_args: "--image-family={{ image_family[test_os] }} --image-project={{ image_project[test_os] }}"
-          when: "'centos' in test_os"
+          when: "'centos' in test_os or 'rhel' in test_os"
 
         - name: Create gcp instance
           command:
@@ -232,7 +234,6 @@
 
         - name: config ssh keypair used by test
           amazon.aws.ec2_key:
-            # region: "{{ lookup('env', 'AWS_REGION') }}"
             name: "kp-bootc-{{ random_num }}"
             key_material: "{{ lookup('file', ssh_key_pub) }}"
 

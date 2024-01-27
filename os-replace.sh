@@ -1,9 +1,15 @@
 #!/bin/bash
 set -exuo pipefail
 
-# Env vars list
-# PLATFORM, TEST_OS, ARCH, QUAY_USERNAME, QUAY_PASSWORD
-# For RHEL only: RHEL_REGISTRY_URL, DOWNLOAD_NODE, QUAY_SECRET
+# Required env variables list
+# PLATFORM: openstack, gcp, aws
+# TEST_OS: rhel-9-4, centos-stream-9
+# ARCH: x86_64, aarch64
+# QUAY_USERNAME, QUAY_PASSWORD
+# DOWNLOAD_NODE
+# For RHEL only: RHEL_REGISTRY_URL, QUAY_SECRET
+# For GCP only: GCP_SERVICE_ACCOUNT_FILE, GCP_SERVICE_ACCOUNT_NAME, GCP_PROJECT
+# For AWS only: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
 
 # Colorful timestamped output.
 function greenprint {
@@ -60,7 +66,7 @@ TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/xiaofwan/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Create $TEST_OS installation Containerfile"
-tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
+tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"
 $ADD_REPO
 RUN dnf -y install python3 cloud-init && \
@@ -71,11 +77,14 @@ EOF
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
 
+greenprint "Login quay.io"
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 greenprint "Build $TEST_OS installation container image"
 podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
 greenprint "Push $TEST_OS installation container image"
-podman push --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -113,16 +122,16 @@ ansible-playbook -v \
     check-system.yaml
 
 greenprint "Create upgrade Containerfile"
-tee -a "$UPGRADE_CONTAINERFILE" > /dev/null < EOF
+tee "$UPGRADE_CONTAINERFILE" > /dev/null << EOF
 FROM "$TEST_IMAGE_URL"
 RUN dnf -y install wget && \
     dnf -y clean all
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE"
+podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
-podman push --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
@@ -135,3 +144,15 @@ ansible-playbook -v \
     -e bootc_image="$TEST_IMAGE_URL" \
     -e upgrade="true" \
     check-system.yaml
+
+greenprint "Remove $PLATFORM instance"
+ansible-playbook -v \
+    -i "$INVENTORY_FILE" \
+    -e platform="$PLATFORM" \
+    remove.yaml
+
+greenprint "Clean up"
+rm -rf "$TEMPDIR" auth.json rhel-9-4.repo gcp_key
+
+greenprint "🎉 All tests passed."
+exit 0

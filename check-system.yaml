@@ -179,7 +179,7 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
 
     # case: check /usr mount point
-    - name: check /usr mount point
+    - name: check /usr mount point on CentOS Stream
       command: findmnt -r -o SOURCE -n /usr
       register: result_usr_mount_point
 
@@ -199,6 +199,29 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       vars:
         usr_mount_path: "{{ device_name }}[/ostree/deploy/{{ osname }}/deploy/{{ ostree_checksum }}.0/usr]"
+      when: ansible_facts['distribution'] != 'RedHat'
+
+    - name: check /usr mount point on RHEL
+      command: findmnt -r -o SOURCE -n /usr
+      register: result_usr_mount_point
+
+    - name: /usr mount point checking
+      block:
+        - assert:
+            that:
+              - result_usr_mount_point.stdout == usr_mount_path
+            fail_msg: "/usr does not mount on {{ usr_mount_path }}"
+            success_msg: "/usr mounts on {{ usr_mount_path }}"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      vars:
+        usr_mount_path: "overlay[/usr]"
+      when: ansible_facts['distribution'] == 'RedHat'
 
     # case: check /usr mount status
     - name: check /usr mount status
@@ -220,25 +243,50 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
-    # case: check wget installed after upgrade
     - name: check installed package
       shell: rpm -qa | sort
       register: result_packages
 
-    - name: check wget installed
+    - name: upgrade checking
       block:
-        - assert:
-            that:
-              - "'wget' in result_packages.stdout"
-            fail_msg: "wget not installed, ostree upgrade might be failed"
-            success_msg: "wget installed in ostree upgrade"
-      always:
+        # case: check booted ostree chacksum != rollback ostree checksum
+        - name: get rollback ostree checksum
+          shell: bootc status --json | jq -r '.status.rollback.ostree.checksum'
+          register: result_rollback_ostree_checksum
+          become: true
+
+        - name: check booted and rollback ostree chacksum
+          block:
+            - assert:
+                that:
+                  - ostree_checksum != result_rollback_ostree_checksum.stdout
+                fail_msg: "upgrade failed"
+                success_msg: "upgrade passed"
+          always:
+            - set_fact:
+                total_counter: "{{ total_counter | int + 1 }}"
+          rescue:
+            - name: failed count + 1
+              set_fact:
+                failed_counter: "{{ failed_counter | int + 1 }}"
         - set_fact:
-            total_counter: "{{ total_counter | int + 1 }}"
-      rescue:
-        - name: failed count + 1
-          set_fact:
-            failed_counter: "{{ failed_counter | int + 1 }}"
+            ostree_checksum: "{{ result_ostree_checksum.stdout }}"
+
+        # case: check wget installed after upgrade
+        - name: check wget installed
+          block:
+            - assert:
+                that:
+                  - "'wget' in result_packages.stdout"
+                fail_msg: "wget not installed, ostree upgrade might be failed"
+                success_msg: "wget installed in ostree upgrade"
+          always:
+            - set_fact:
+                total_counter: "{{ total_counter | int + 1 }}"
+          rescue:
+            - name: failed count + 1
+              set_fact:
+                failed_counter: "{{ failed_counter | int + 1 }}"
       when: upgrade == "true"
 
     # case: check dmesg error and failed log

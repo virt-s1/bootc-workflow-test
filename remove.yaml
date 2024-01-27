@@ -1,0 +1,65 @@
+---
+- hosts: cloud
+  gather_facts: false
+  become: false
+  vars:
+    cloud_profile: "rhos-01"
+
+  tasks:
+    - name: Remove openstack resources
+      block:
+        - name: remove openstack instance
+          openstack.cloud.server:
+            cloud: "{{ cloud_profile }}"
+            name: "{{ instance_name }}"
+            state: absent
+          ignore_errors: true
+
+        - name: remove openstack keypair
+          openstack.cloud.keypair:
+            cloud: "{{ cloud_profile }}"
+            state: absent
+            name: "kp-bootc-{{ random_num }}"
+          ignore_errors: true
+
+        - name: remove security group
+          openstack.cloud.security_group:
+            cloud: "{{ cloud_profile }}"
+            name: "sg-bootc-{{ random_num }}"
+            state: absent
+          ignore_errors: true
+      when: platform == "openstack"
+
+    - name: Remove GCP resources
+      block:
+        - name: "remove gcp instance {{ instance_name }}"
+          command:
+            "/usr/bin/gcloud compute instances delete {{ instance_name }} \
+            --zone=us-central1-a \
+            --delete-disks=all \
+            --project={{ lookup('env', 'GCP_PROJECT') }}"
+      when: platform == "gcp"
+
+    - name: Remove AWS resources
+      block:
+        - name: terminate instance
+          amazon.aws.ec2_instance:
+            instance_ids: "{{ instance_id }}"
+            state: absent
+            wait: true
+          ignore_errors: true
+
+        - name: wait until instance terminated
+          amazon.aws.ec2_instance_info:
+            instance_ids:
+              - "{{ instance_id }}"
+          register: result_instance_status
+          retries: 30
+          delay: 10
+          until: result_instance_status.instances[0].state.name == "terminated"
+
+        - name: remove ec2 key
+          amazon.aws.ec2_key:
+            name: "kp-bootc-{{ random_num }}"
+            state: absent
+      when: platform == "aws"
