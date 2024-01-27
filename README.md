@@ -30,4 +30,12 @@
     AWS_ACCESS_KEY_ID           AWS access key id
     AWS_SECRET_ACCESS_KEY       AWS secrety key
     AWS_REGION                  AWS region
+    OS_USERNAME                 OpenStack username
+    OS_PASSWORD                 OpenStack password
+    OS_PROJECT_NAME             OpenStack project name
+    OS_AUTH_URL                 OpenStack authentication URL
+    OS_REGION_NAME              OpenStack region name
+    OS_USER_DOMAIN_NAME         OpenStack domain name
+    OS_PROJECT_DOMAIN_ID        OpenStack project domain ID
+    OS_IDENTITY_API_VERSION     OpenStack identity API version
 
