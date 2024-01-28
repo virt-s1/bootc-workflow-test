@@ -20,11 +20,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: checkout code
-        if: steps.user_permission.require-result == true
+        if: steps.user_permission.outputs.require-result == 'true'
         uses: actions/checkout@v3
 
       - name: Build container
-        if: steps.user_permission.require-result == true
+        if: steps.user_permission.outputs.require-result == 'true'
         run: |
           sudo apt-get install -y podman
           podman build -t bootc-test-runner:x86_64 -f tools/Dockerfile tools
