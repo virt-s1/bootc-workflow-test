@@ -10,9 +10,21 @@ jobs:
     if: github.repository == 'virt-s1/bootc-workflow-test'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Get User Permission
+        id: user_permission
+        uses: actions-cool/check-user-permission@v2
+        with:
+          require: write
+          username: ${{ github.triggering_actor }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: checkout code
+        if: steps.user_permission.require-result == 'true'
+        uses: actions/checkout@v3
 
       - name: Build container
+        if: steps.user_permission.require-result == 'true'
         run: |
           sudo apt-get install -y podman
           podman build -t bootc-test-runner:x86_64 -f tools/Dockerfile tools
