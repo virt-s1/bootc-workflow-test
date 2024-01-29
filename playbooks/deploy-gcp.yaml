@@ -5,6 +5,9 @@
   vars:
     test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
+    flavor:
+      x86_64: "n2-standard-2"
+      aarch64: "t2a-standard-1"
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
@@ -38,10 +41,9 @@
       command:
         "/usr/bin/gcloud compute instances create {{ instance_name }} \
         --zone=us-central1-a \
-        --machine-type=n2-standard-2 \
+        --machine-type={{ flavor[arch] }} \
         --boot-disk-auto-delete \
         --boot-disk-size=80GB \
-        --boot-disk-type=pd-ssd \
         --metadata-from-file=ssh-keys={{ ssh_key_pub }}.gcp_key \
         --metadata=block-project-ssh-keys=TRUE \
         --provisioning-model=SPOT \

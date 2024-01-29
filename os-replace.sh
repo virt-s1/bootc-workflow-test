@@ -21,6 +21,9 @@ function redprint {
 }
 
 TEMPDIR=$(mktemp -d)
+trap 'rm -rf -- "$TEMPDIR"' EXIT
+
+[[ -n "${GCP_SERVICE_ACCOUNT_FILE_B64+x}" ]] && echo "$GCP_SERVICE_ACCOUNT_FILE_B64" | base64 -d > "${TEMPDIR}"/gcp_auth.json && export GCP_SERVICE_ACCOUNT_FILE=${TEMPDIR}/gcp_auth.json
 
 # SSH configurations
 SSH_KEY=${TEMPDIR}/id_rsa
@@ -72,7 +75,7 @@ case "$TEST_OS" in
 esac
 
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
-TEST_IMAGE_URL="quay.io/xiaofwan/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+TEST_IMAGE_URL="quay.io/${QUAY_USERNAME}/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF

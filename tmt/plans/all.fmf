@@ -1,0 +1,69 @@
+discover:
+  how: fmf
+prepare:
+  - how: install
+    package:
+      - ansible-core
+      - beaker-client
+      - gcc
+      - podman
+      - skopeo
+      - python3-devel
+      - unzip
+  - how: shell
+    script: |
+      pip install boto3 botocore openstacksdk
+      ansible-galaxy collection install openstack.cloud community.general amazon.aws ansible.posix
+  - how: shell
+    script: curl "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install
+execute:
+  how: tmt
+
+/openstack:
+  summary: Run os-replace test on openstack
+  tag: openstack
+  environment+:
+    PLATFORM: openstack
+  adjust:
+    - when: arch == x86_64
+      discover+:
+        test: os-replace
+    - when: arch != x86_64
+      discover+:
+        test: N/A
+
+/gcp:
+  summary: Run os-replace test on gcp
+  tag: gcp
+  environment+:
+    PLATFORM: gcp
+  prepare+:
+    - how: shell
+      script: cp tools/google-cloud-sdk.repo /etc/yum.repos.d/
+    - how: install
+      package:
+        - google-cloud-cli
+  discover+:
+    test: os-replace
+  adjust:
+    - when: arch == x86_64 or arch == aarch64
+      discover+:
+        test: os-replace
+    - when: arch != x86_64 and arch != aarch64
+      discover+:
+        test: N/A
+
+/aws:
+  summary: Run os-replace test on aws
+  tag: aws
+  environment+:
+    PLATFORM: aws
+  discover+:
+    test: os-replace
+  adjust:
+    - when: arch == x86_64 or arch == aarch64
+      discover+:
+        test: os-replace
+    - when: arch != x86_64 and arch != aarch64
+      discover+:
+        test: N/A
