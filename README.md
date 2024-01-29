@@ -11,9 +11,11 @@
 
     TEST_OS=centos-stream-9 ARCH=<arch> PLATFORM=<platform> QUAY_USERNAME=<quay_username> QUAY_PASSWORD=<quay_password> ./os-replace.sh
 
-AWS test needs environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION=us-east-1` have to be configured.
-GCP test needs environment variables `GCP_PROJECT`, `GCP_SERVICE_ACCOUNT_NAME` and `GCP_SERVICE_ACCOUNT_FILE` have to be configured.
-OpenStack test needs environment variables `OS_USERNAME`, `OS_PASSWORD`, `OS_PROJECT_NAME`, `OS_AUTH_URL`, `OS_REGION_NAME`, `OS_USER_DOMAIN_NAME`, `OS_PROJECT_DOMAIN_ID` and `OS_IDENTITY_API_VERSION` have to be configured.
+* AWS test needs environment variables `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION=us-east-1` have to be configured.
+
+* GCP test needs environment variables `GCP_PROJECT`, `GCP_SERVICE_ACCOUNT_NAME` and `GCP_SERVICE_ACCOUNT_FILE` have to be configured.
+
+* OpenStack test needs environment variables `OS_USERNAME`, `OS_PASSWORD`, `OS_PROJECT_NAME`, `OS_AUTH_URL`, `OS_REGION_NAME`, `OS_USER_DOMAIN_NAME`, `OS_PROJECT_DOMAIN_ID` and `OS_IDENTITY_API_VERSION` have to be configured.
 
 ### Required environment variables
 
