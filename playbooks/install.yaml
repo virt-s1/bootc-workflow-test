@@ -1,0 +1,44 @@
+---
+- hosts: guest
+  gather_facts: false
+  become: false
+  vars:
+    test_image_url: ""
+
+  tasks:
+    - name: Install podman and skopeo
+      package:
+        name:
+          - podman
+          - skopeo
+        state: present
+      become: true
+
+    - name: Auth for RHEL private image
+      command:
+        podman login \
+        -u "{{ lookup('env', 'QUAY_USERNAME') }}" \
+        -p "{{ lookup('env', 'QUAY_PASSWORD') }}" \
+        quay.io
+      become: true
+
+    - name: Install image
+      command:
+        "podman run \
+         --rm \
+         --privileged \
+         --pid=host \
+         -v /:/target \
+         --security-opt label=type:unconfined_t \
+         {{ test_image_url }} \
+         bootc install to-filesystem --replace=alongside /target"
+      become: true
+
+    - name: Reboot to deploy new system
+      reboot:
+        post_reboot_delay: 60
+      become: true
+
+    - name: Wait for connection to become reachable/usable
+      wait_for_connection:
+        delay: 30

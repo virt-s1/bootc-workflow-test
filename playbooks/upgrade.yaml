@@ -10,6 +10,7 @@
 
     - name: Reboot to deploy new system
       reboot:
+        post_reboot_delay: 60
       become: true
 
     - name: Wait for connection to become reachable/usable
