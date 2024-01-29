@@ -2,29 +2,24 @@
 - hosts: cloud
   gather_facts: false
   become: false
-  vars:
-    cloud_profile: "rhos-01"
 
   tasks:
     - name: Remove openstack resources
       block:
         - name: remove openstack instance
           openstack.cloud.server:
-            cloud: "{{ cloud_profile }}"
             name: "{{ instance_name }}"
             state: absent
           ignore_errors: true
 
         - name: remove openstack keypair
           openstack.cloud.keypair:
-            cloud: "{{ cloud_profile }}"
             state: absent
             name: "kp-bootc-{{ random_num }}"
           ignore_errors: true
 
         - name: remove security group
           openstack.cloud.security_group:
-            cloud: "{{ cloud_profile }}"
             name: "sg-bootc-{{ random_num }}"
             state: absent
           ignore_errors: true
