@@ -12,7 +12,7 @@
     --key-name kp-bootc-{{ random_num }} \
     --security-group-ids {{ ec2_security_group.security_groups[0].group_id }} \
     --subnet-id {{ ec2_vpc_subnet.subnets[0].subnet_id }} \
-    --tag-specifications ResourceType=instance,Tags=[\{Key=bootc-test,Value='bootc-test.{{ test_os }}.{{ arch }}'\},\{Key=name,Value='bootc-test.{{ test_os }}.{{ arch }}'\}] \
+    --tag-specifications ResourceType=instance,Tags=[\{Key=bootc-test,Value='bootc-test.{{ test_os }}.{{ arch }}.{{ random_num }}'\},\{Key=Name,Value='bootc-test.{{ test_os }}.{{ arch }}.{{ random_num }}'\}] \
 
 return_code=$?
 if [[ $return_code == 0 ]]; then

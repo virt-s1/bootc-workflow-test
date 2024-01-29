@@ -1,3 +1,4 @@
 gcp_key
 rhel-9-4.repo
 auth.json
+ec2_run_instance.sh
