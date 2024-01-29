@@ -1,6 +1,5 @@
 ---
 - hosts: guest
-  gather_facts: false
   become: false
 
   tasks:

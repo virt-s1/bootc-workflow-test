@@ -179,11 +179,11 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
 
     # case: check /usr mount point
-    - name: check /usr mount point on CentOS Stream
+    - name: check /usr mount point
       command: findmnt -r -o SOURCE -n /usr
       register: result_usr_mount_point
 
-    - name: /usr mount point checking
+    - name: /usr mount point checking on CentOS Stream
       block:
         - assert:
             that:
@@ -201,11 +201,7 @@
         usr_mount_path: "{{ device_name }}[/ostree/deploy/{{ osname }}/deploy/{{ ostree_checksum }}.0/usr]"
       when: ansible_facts['distribution'] != 'RedHat'
 
-    - name: check /usr mount point on RHEL
-      command: findmnt -r -o SOURCE -n /usr
-      register: result_usr_mount_point
-
-    - name: /usr mount point checking
+    - name: /usr mount point checking on RHEL
       block:
         - assert:
             that:
@@ -355,7 +351,6 @@
       block:
         - name: check system reboot
           reboot:
-            reboot_command: systemctl reboot
             post_reboot_delay: 60
           become: true
 

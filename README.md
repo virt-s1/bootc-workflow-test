@@ -15,7 +15,7 @@
 
 * GCP test needs environment variables `GCP_PROJECT`, `GCP_SERVICE_ACCOUNT_NAME` and `GCP_SERVICE_ACCOUNT_FILE` have to be configured.
 
-* OpenStack test needs environment variables `OS_USERNAME`, `OS_PASSWORD`, `OS_PROJECT_NAME`, `OS_AUTH_URL`, `OS_REGION_NAME`, `OS_USER_DOMAIN_NAME`, `OS_PROJECT_DOMAIN_ID` and `OS_IDENTITY_API_VERSION` have to be configured.
+* OpenStack test needs environment variables `OS_USERNAME`, `OS_PASSWORD`, `OS_PROJECT_NAME`, `OS_AUTH_URL`, `OS_USER_DOMAIN_NAME` and `OS_PROJECT_DOMAIN_NAME` have to be configured.
 
 ### Required environment variables
 
@@ -47,8 +47,6 @@
     OS_PASSWORD                 OpenStack password
     OS_PROJECT_NAME             OpenStack project name
     OS_AUTH_URL                 OpenStack authentication URL
-    OS_REGION_NAME              OpenStack region name
     OS_USER_DOMAIN_NAME         OpenStack domain name
-    OS_PROJECT_DOMAIN_ID        OpenStack project domain ID
-    OS_IDENTITY_API_VERSION     OpenStack identity API version
+    OS_PROJECT_DOMAIN_NAME      OpenStack project domain name
 

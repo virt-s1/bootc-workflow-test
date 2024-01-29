@@ -1,6 +1,5 @@
 ---
 - hosts: guest
-  gather_facts: false
   become: false
   vars:
     test_image_url: ""
