@@ -44,7 +44,7 @@
       amazon.aws.ec2_vpc_subnet_info:
         filters:
           "tag:Name": "kite-ci"
-          "availabilityZone": "{{ ec2_zones.availability_zones[0] }}"
+          "availabilityZone": "{{ ec2_zones.availability_zones[0].zone_name }}"
       register: ec2_vpc_subnet
 
     - name: get security group
@@ -57,6 +57,8 @@
       amazon.aws.ec2_key:
         name: "kp-bootc-{{ random_num }}"
         key_material: "{{ lookup('file', ssh_key_pub) }}"
+        tags:
+          name: "bootc-test"
 
     - name: generate ec2_run_instance script
       template:
@@ -73,14 +75,14 @@
         instance_json: "{{ result_instance.stdout | from_json }}"
 
     - name: wait for instance running
-      shell: aws ec2 describe-instances --instance-ids {{ instance_json.instances[0].instanceid }} | jq -r '.reservations[0].instances[0].state.name'
+      shell: aws ec2 describe-instances --instance-ids {{ instance_json.Instances[0].InstanceId }} --query 'Reservations[0].Instances[0].State.Name' --output text
       register: describe_result
       retries: 60
       delay: 5
       until: describe_result.stdout == "running"
 
     - name: get instance public ip
-      shell: aws ec2 describe-instances --instance-ids {{ instance_json.instances[0].instanceid }} | jq -r '.reservations[0].instances[0].publicipaddress'
+      shell: aws ec2 describe-instances --instance-ids {{ instance_json.Instances[0].InstanceId }} --query 'Reservations[*].Instances[*].PublicIpAddress' --output text
       register: ip_result
 
     - set_fact:
@@ -90,7 +92,7 @@
       wait_for:
         host: "{{ instance_ip }}"
         port: 22
-        search_regex: openssh
+        search_regex: OpenSSH
         delay: 10
       retries: 30
       register: result_ssh_check

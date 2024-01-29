@@ -41,6 +41,7 @@ case "$TEST_OS" in
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
         sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
         ADD_AUTH="COPY auth.json /etc/ostree/auth.json"
+        if [[ "$PLATFORM" == "aws" ]]; then SSH_USER="ec2-user"; fi
         ;;
     "centos-stream-9")
         IMAGE_NAME="centos-bootc"
@@ -48,6 +49,7 @@ case "$TEST_OS" in
         SSH_USER="cloud-user"
         ADD_REPO=""
         ADD_AUTH=""
+        if [[ "$PLATFORM" == "aws" ]]; then SSH_USER="ec2-user"; fi
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
