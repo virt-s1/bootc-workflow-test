@@ -355,6 +355,8 @@
       block:
         - name: check system reboot
           reboot:
+            reboot_command: systemctl reboot
+            post_reboot_delay: 60
           become: true
 
         - name: wait for connection to become reachable/usable

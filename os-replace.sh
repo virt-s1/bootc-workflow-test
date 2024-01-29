@@ -37,9 +37,9 @@ case "$TEST_OS" in
         IMAGE_NAME="rhel9-rhel_bootc"
         TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
         SSH_USER="cloud-user"
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" templates/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
-        sed "s/REPLACE_ME/${QUAY_SECRET}/g" templates/auth.template | tee auth.json > /dev/null
+        sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
         ADD_AUTH="COPY auth.json /etc/ostree/auth.json"
         ;;
     "centos-stream-9")
@@ -105,21 +105,29 @@ ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/
 ansible_python_interpreter=/usr/bin/python3
 EOF
 
-greenprint "Deploy $PLATFORM instance and replace os"
+greenprint "Prepare ansible.cfg"
+export ANSIBLE_CONFIG="${PWD}/playbooks/ansible.cfg"
+
+greenprint "Deploy $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e ssh_user="$SSH_USER" \
     -e ssh_key_pub="$SSH_KEY_PUB" \
     -e test_image_url="$TEST_IMAGE_URL" \
     -e inventory_file="$INVENTORY_FILE" \
-    -e download_node="$DOWNLOAD_NODE" \
-    os-replace.yaml
+    "playbooks/deploy-${PLATFORM}.yaml"
+
+greenprint "Install $TEST_OS bootc system"
+ansible-playbook -v \
+    -i "$INVENTORY_FILE" \
+    -e test_image_url="$TEST_IMAGE_URL" \
+    playbooks/install.yaml
 
 greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    check-system.yaml
+    playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
 tee "$UPGRADE_CONTAINERFILE" > /dev/null << EOF
@@ -136,23 +144,24 @@ podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
-    upgrade.yaml
+    playbooks/upgrade.yaml
 
 greenprint "Run ostree checking test after upgrade on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
     -e upgrade="true" \
-    check-system.yaml
+    playbooks/check-system.yaml
 
 greenprint "Remove $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e platform="$PLATFORM" \
-    remove.yaml
+    playbooks/remove.yaml
 
 greenprint "Clean up"
-rm -rf "$TEMPDIR" auth.json rhel-9-4.repo gcp_key
+rm -rf "$TEMPDIR" auth.json rhel-9-4.repo
+unset ANSIBLE_CONFIG
 
 greenprint "🎉 All tests passed."
 exit 0
