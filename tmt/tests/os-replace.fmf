@@ -1,4 +1,4 @@
 test: ./test.sh
-duration: 20m
+duration: 30m
 environment:
   TEST_CASE: os-replace

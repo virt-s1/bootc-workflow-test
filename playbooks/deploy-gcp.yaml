@@ -48,7 +48,6 @@
         --metadata=block-project-ssh-keys=TRUE \
         --provisioning-model=SPOT \
         {{ image_args }} \
-        --service-account={{ lookup('env', 'GCP_SERVICE_ACCOUNT_NAME') }} \
         --project={{ lookup('env', 'GCP_PROJECT') }} \
         --format=json"
       register: result_instance

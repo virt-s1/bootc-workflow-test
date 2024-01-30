@@ -33,7 +33,7 @@ case "$TEST_OS" in
         SSH_USER="cloud-user"
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
-        sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
+        sed "s/REPLACE_ME/$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)/g" files/auth.template | tee auth.json > /dev/null
         ADD_AUTH="COPY auth.json /etc/ostree/auth.json"
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
@@ -65,7 +65,7 @@ case "$TEST_OS" in
 esac
 
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
-TEST_IMAGE_URL="quay.io/${QUAY_USERNAME}/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF

@@ -10,7 +10,7 @@
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     images:
       rhel-9-4: RHEL-9.4.0-x86_64-nightly-latest
-      centos-stream-9: edge-centos-stream-9
+      centos-stream-9: CentOS-Stream-9-latest
 
   tasks:
     - set_fact:
