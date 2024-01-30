@@ -32,6 +32,7 @@ UPGRADE_CONTAINERFILE=${TEMPDIR}/Containerfile.upgrade
 QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')}"
 INVENTORY_FILE="${TEMPDIR}/inventory"
 
+REPLACE_CLOUD_USER=""
 case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
@@ -41,7 +42,10 @@ case "$TEST_OS" in
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
         sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
         ADD_AUTH="COPY auth.json /etc/ostree/auth.json"
-        if [[ "$PLATFORM" == "aws" ]]; then SSH_USER="ec2-user"; fi
+        if [[ "$PLATFORM" == "aws" ]]; then
+            SSH_USER="ec2-user"
+            REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
+        fi
         ;;
     "centos-stream-9")
         IMAGE_NAME="centos-bootc"
@@ -49,7 +53,10 @@ case "$TEST_OS" in
         SSH_USER="cloud-user"
         ADD_REPO=""
         ADD_AUTH=""
-        if [[ "$PLATFORM" == "aws" ]]; then SSH_USER="ec2-user"; fi
+        if [[ "$PLATFORM" == "aws" ]]; then
+            SSH_USER="ec2-user"
+            REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
+        fi
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
@@ -74,6 +81,7 @@ $ADD_REPO
 RUN dnf -y install python3 cloud-init && \
     dnf -y clean all
 $ADD_AUTH
+$REPLACE_CLOUD_USER
 EOF
 
 greenprint "Check $TEST_OS installation Containerfile"
