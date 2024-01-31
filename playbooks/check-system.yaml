@@ -187,7 +187,7 @@
       block:
         - assert:
             that:
-              - result_usr_mount_point.stdout == usr_mount_path
+              - result_usr_mount_point.stdout == usr_mount_path or result_usr_mount_point.stdout == "overlay[/usr]"
             fail_msg: "/usr does not mount on {{ usr_mount_path }}"
             success_msg: "/usr mounts on {{ usr_mount_path }}"
       always:

@@ -1,16 +1,6 @@
 #!/bin/bash
 set -exuo pipefail
 
-# Required env variables list
-# PLATFORM: openstack, gcp, aws
-# TEST_OS: rhel-9-4, centos-stream-9
-# ARCH: x86_64, aarch64
-# QUAY_USERNAME, QUAY_PASSWORD
-# DOWNLOAD_NODE
-# For RHEL only: RHEL_REGISTRY_URL, QUAY_SECRET
-# For GCP only: GCP_SERVICE_ACCOUNT_FILE, GCP_SERVICE_ACCOUNT_NAME, GCP_PROJECT
-# For AWS only: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION
-
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -173,7 +163,7 @@ ansible-playbook -v \
     playbooks/remove.yaml
 
 greenprint "Clean up"
-rm -rf "$TEMPDIR" auth.json rhel-9-4.repo
+rm -rf auth.json rhel-9-4.repo
 unset ANSIBLE_CONFIG
 
 greenprint "🎉 All tests passed."

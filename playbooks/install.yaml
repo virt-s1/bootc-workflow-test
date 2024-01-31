@@ -5,6 +5,24 @@
     test_image_url: ""
 
   tasks:
+    - name: check bios or uefi
+      stat:
+        path: /sys/firmware/efi
+
+    - name: check partition size
+      command: df -Th
+      ignore_errors: true
+      become: true
+
+    - name: check disk partition table
+      command: fdisk -l
+      ignore_errors: true
+      become: true
+
+    - name: check mount table
+      command: findmnt
+      ignore_errors: true
+
     - name: Install podman and skopeo
       package:
         name:

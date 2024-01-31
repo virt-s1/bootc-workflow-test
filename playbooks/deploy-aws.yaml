@@ -19,8 +19,11 @@
       x86_64:
         "0": t2.medium
         "1": t3.medium
-        "2": t3a.medium
-        "3": m4.large
+        "2": m6a.large
+      aarch64:
+        "0": t4g.medium
+        "1": c7g.medium
+        "2": m6g.medium
 
   tasks:
     - set_fact:
@@ -36,15 +39,15 @@
       set_fact:
         random_instance_type: "{{ lookup('env', 'instance_type') | default(instance_type[arch][instance_type_index], true) }}"
 
-    - name: get all availability zones
-      amazon.aws.aws_az_info:
-      register: ec2_zones
+    - name: "get available zone for instance {{ random_instance_type }}"
+      shell: aws ec2 describe-instance-type-offerings --location-type availability-zone --filters="Name=instance-type,Values={{ random_instance_type }}" --query InstanceTypeOfferings | jq -r '.[0].Location'
+      register: ec2_zone
 
     - name: get subnet
       amazon.aws.ec2_vpc_subnet_info:
         filters:
           "tag:Name": "kite-ci"
-          "availabilityZone": "{{ ec2_zones.availability_zones[0].zone_name }}"
+          "availabilityZone": "{{ ec2_zone.stdout }}"
       register: ec2_vpc_subnet
 
     - name: get security group
