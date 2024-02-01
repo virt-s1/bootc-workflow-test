@@ -35,6 +35,9 @@ jobs:
     needs: check-image
     runs-on: ubuntu-latest
     steps:
+      - name: Save tested container image digest
+        run: echo "${{ needs.check-image.outputs.image_digest }}" >> files/pr_file
+
       - name: Get current date
         id: date
         run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
