@@ -3,8 +3,8 @@ name: CentOS Stream 9 trigger
 
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 3 * * *'
+  schedule:
+    - cron: '0 3 * * *'
 
 jobs:
   check-image:
