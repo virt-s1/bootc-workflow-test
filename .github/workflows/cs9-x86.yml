@@ -111,12 +111,14 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
+          compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ github.event.pull_request.head.repo.clone_url }}
           git_ref: ${{ github.event.pull_request.head.ref }}
           pull_request_status_name: "bootc-cs9-x86-openstack-replace"
+          tmt_plan_regex: "openstack"
           tf_scope: private
-          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;PLATFORM=openstack;ARCH=x86_64"
+          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
       - name: Set cancelled result status
         if: ${{ cancelled() }}
@@ -194,12 +196,14 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
+          compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ github.event.pull_request.head.repo.clone_url }}
           git_ref: ${{ github.event.pull_request.head.ref }}
           pull_request_status_name: "bootc-cs9-x86-gcp-replace"
+          tmt_plan_regex: "gcp"
           tf_scope: private
-          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;PLATFORM=gcp;ARCH=x86_64"
+          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
       - name: Set cancelled result status
         if: ${{ cancelled() }}
@@ -277,12 +281,14 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
+          compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ github.event.pull_request.head.repo.clone_url }}
           git_ref: ${{ github.event.pull_request.head.ref }}
           pull_request_status_name: "bootc-cs9-x86-aws-replace"
+          tmt_plan_regex: "aws"
           tf_scope: private
-          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;PLATFORM=aws;ARCH=x86_64"
+          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
       - name: Set cancelled result status
         if: ${{ cancelled() }}
