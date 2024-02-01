@@ -50,7 +50,7 @@ jobs:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
             (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86')) ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
             endsWith(github.event.comment.body, '/test-cs9-x86-openstack-replace')) }}
     runs-on: ubuntu-latest
     env:
@@ -135,7 +135,7 @@ jobs:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
             (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86')) ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
             endsWith(github.event.comment.body, '/test-cs9-x86-gcp-replace')) }}
     runs-on: ubuntu-latest
     env:
@@ -220,7 +220,7 @@ jobs:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
             (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86')) ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
             endsWith(github.event.comment.body, '/test-cs9-x86-aws-replace')) }}
     runs-on: ubuntu-latest
     env:
