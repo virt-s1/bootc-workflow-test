@@ -35,6 +35,8 @@ jobs:
     needs: check-image
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Save tested container image digest
         run: echo "${{ needs.check-image.outputs.image_digest }}" >> files/pr_file
 
