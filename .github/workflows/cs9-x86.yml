@@ -45,63 +45,14 @@ jobs:
     outputs:
       allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
       sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
-
-  pre-cs9-x86-openstack-replace:
-    needs: pr-info
-    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86-openstack-replace')) }}
-    runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-openstack-replace
-
-    steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "pre-cs9-x86-openstack-replace" '.jobs | map(select(.name == "pre-cs9-x86-openstack-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Deploying runner...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      ref: ${{ fromJson(steps.pr-api.outputs.data).head.ref }}
+      repo_url: ${{ fromJson(steps.pr-api.outputs.data).head.repo.html_url }}
 
   cs9-x86-openstack-replace:
-    needs: [pr-info, pre-cs9-x86-openstack-replace]
+    needs: pr-info
     runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-openstack-replace
 
     steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "cs9-x86-openstack-replace" '.jobs | map(select(.name == "cs9-x86-openstack-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Test is running...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Clone repository
         uses: actions/checkout@v4
         with:
@@ -113,80 +64,18 @@ jobs:
         with:
           compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
-          git_url: ${{ github.event.pull_request.head.repo.clone_url }}
-          git_ref: ${{ github.event.pull_request.head.ref }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
           pull_request_status_name: "bootc-cs9-x86-openstack-replace"
           tmt_plan_regex: "openstack"
           tf_scope: private
           secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
-      - name: Set cancelled result status
-        if: ${{ cancelled() }}
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: error
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  pre-cs9-x86-gcp-replace:
-    needs: pr-info
-    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86-gcp-replace')) }}
-    runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-gcp-replace
-
-    steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "pre-cs9-x86-gcp-replace" '.jobs | map(select(.name == "pre-cs9-x86-gcp-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Deploying runner...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   cs9-x86-gcp-replace:
-    needs: [pr-info, pre-cs9-x86-gcp-replace]
+    needs: pr-info
     runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-gcp-replace
 
     steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "cs9-x86-gcp-replace" '.jobs | map(select(.name == "cs9-x86-gcp-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Test is running...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Clone repository
         uses: actions/checkout@v4
         with:
@@ -198,80 +87,18 @@ jobs:
         with:
           compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
-          git_url: ${{ github.event.pull_request.head.repo.clone_url }}
-          git_ref: ${{ github.event.pull_request.head.ref }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
           pull_request_status_name: "bootc-cs9-x86-gcp-replace"
           tmt_plan_regex: "gcp"
           tf_scope: private
           secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
-      - name: Set cancelled result status
-        if: ${{ cancelled() }}
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: error
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  pre-cs9-x86-aws-replace:
-    needs: pr-info
-    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-x86-aws-replace')) }}
-    runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-aws-replace
-
-    steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "pre-cs9-x86-aws-replace" '.jobs | map(select(.name == "pre-cs9-x86-aws-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Deploying runner...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   cs9-x86-aws-replace:
-    needs: [pr-info, pre-cs9-x86-aws-replace]
+    needs: pr-info
     runs-on: ubuntu-latest
-    env:
-      STATUS_NAME: bootc-cs9-x86-aws-replace
 
     steps:
-      - name: Get Current Job Log URL
-        id: job-log-url
-        run: |
-          JOB_HTML_URL=$(curl --get -Ss -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" "https://api.github.com/repos/virt-s1/bootc-workflow-test/actions/runs/${GITHUB_RUN_ID}/jobs?per_page=30" | jq -r --arg job_name "cs9-x86-aws-replace" '.jobs | map(select(.name == "cs9-x86-aws-replace")) | .[0].html_url')
-          echo "html_url=$JOB_HTML_URL" >> $GITHUB_OUTPUT
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create in-progress status
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: pending
-          description: 'CentOS Stream 9 - Test is running...'
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Clone repository
         uses: actions/checkout@v4
         with:
@@ -283,20 +110,9 @@ jobs:
         with:
           compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
-          git_url: ${{ github.event.pull_request.head.repo.clone_url }}
-          git_ref: ${{ github.event.pull_request.head.ref }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
           pull_request_status_name: "bootc-cs9-x86-aws-replace"
           tmt_plan_regex: "aws"
           tf_scope: private
           secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
-
-      - name: Set cancelled result status
-        if: ${{ cancelled() }}
-        uses: octokit/request-action@v2.x
-        with:
-          route: 'POST /repos/${{ github.repository }}/statuses/${{ needs.pr-info.outputs.sha }}'
-          context: ${{ env.STATUS_NAME }}
-          state: error
-          target_url: '${{ steps.job-log-url.outputs.html_url }}'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
