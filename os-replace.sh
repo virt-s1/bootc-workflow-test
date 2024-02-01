@@ -33,8 +33,6 @@ case "$TEST_OS" in
         SSH_USER="cloud-user"
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
-        sed "s/REPLACE_ME/$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)/g" files/auth.template | tee auth.json > /dev/null
-        ADD_AUTH="COPY auth.json /etc/ostree/auth.json"
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
@@ -45,7 +43,6 @@ case "$TEST_OS" in
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
         SSH_USER="cloud-user"
         ADD_REPO=""
-        ADD_AUTH=""
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
@@ -56,7 +53,6 @@ case "$TEST_OS" in
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
         SSH_USER="fedora"
         ADD_REPO=""
-        ADD_AUTH=""
         ;;
     *)
         redprint "Variable TEST_OS has to be defined"
@@ -67,13 +63,14 @@ esac
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
+sed "s/REPLACE_ME/$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)/g" files/auth.template | tee auth.json > /dev/null
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"
 $ADD_REPO
 RUN dnf -y install python3 cloud-init && \
     dnf -y clean all
-$ADD_AUTH
+COPY auth.json /etc/ostree/auth.json
 $REPLACE_CLOUD_USER
 EOF
 
