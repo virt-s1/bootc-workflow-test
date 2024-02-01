@@ -92,7 +92,7 @@ jobs:
           pull_request_status_name: "bootc-cs9-x86-gcp-replace"
           tmt_plan_regex: "gcp"
           tf_scope: private
-          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
+          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9"
 
   cs9-x86-aws-replace:
     needs: pr-info
