@@ -48,7 +48,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           commit-message: "CentOS Stream 9 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
           committer: cloudkitebot <henrywangxf1@gmail.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
