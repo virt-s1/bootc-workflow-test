@@ -1,5 +1,5 @@
 ---
-name: CentOS Stream 9 trigger
+name: centos-bootc:stream9 trigger
 
 on:
   workflow_dispatch:
@@ -49,16 +49,16 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "CentOS Stream 9 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
+          commit-message: "build: centos-bootc:stream9 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
           committer: cloudkitebot <henrywangxf1@gmail.com>
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           branch: cpr
           branch-suffix: random
           delete-branch: true
-          title: "CentOS Stream 9 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
-          labels: auto-merge,CentOS-Stream-9
+          title: "centos-bootc:stream9 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
+          labels: auto-merge,centos-bootc:stream9
           body: |
-            CentOS Stream 9 image ${{ needs.check-image.outputs.image_version }}
+            centos-bootc:stream9 image ${{ needs.check-image.outputs.image_version }}
             - Date: ${{ steps.date.outputs.date }}
             - Image URL: quay.io/centos-bootc/centos-bootc:stream9
             - Image Digest: ${{ needs.check-image.outputs.image_digest }}
@@ -86,5 +86,5 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           project-name: bootc test
-          column-name: CentOS-Stream-9
+          column-name: centos-bootc:stream9
           issue-number: ${{ steps.cpr.outputs.pull-request-number }}
