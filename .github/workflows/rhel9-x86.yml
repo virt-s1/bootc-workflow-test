@@ -14,6 +14,7 @@ jobs:
             endsWith(github.event.comment.body, '/test-rhel94-x86-openstack-replace') ||
             endsWith(github.event.comment.body, '/test-rhel94-x86-gcp-replace') ||
             endsWith(github.event.comment.body, '/test-rhel94-x86-aws-replace') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86-libvirt-replace') ||
             endsWith(github.event.comment.body, '/test-rhel94-x86-anaconda')) }}
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +63,7 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: CentOS-Stream-9
+          compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
@@ -85,14 +86,14 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: CentOS-Stream-9
+          compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           pull_request_status_name: "bootc-rhel94-x86-gcp-replace"
           tmt_plan_regex: "gcp"
           tf_scope: private
-          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
+          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=rhel-9-4"
 
   rhel94-x86-aws-replace:
     needs: pr-info
@@ -108,11 +109,34 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: CentOS-Stream-9
+          compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           pull_request_status_name: "bootc-rhel94-x86-aws-replace"
           tmt_plan_regex: "aws"
           tf_scope: private
-          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
+          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=rhel-9-4"
+
+  rhel94-x86-libvirt-replace:
+    needs: pr-info
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: RHEL-9.4.0-Nightly
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          pull_request_status_name: "bootc-rhel94-x86-libvirt-replace"
+          tmt_plan_regex: "local"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=rhel-9-4"
