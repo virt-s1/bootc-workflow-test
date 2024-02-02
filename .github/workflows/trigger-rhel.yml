@@ -1,0 +1,95 @@
+---
+name: rhel9-rhel_bootc:rhel-9.4 trigger
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 5 * * *'
+
+jobs:
+  check-image:
+    # Do not run this job on any fork repos
+    if: github.repository == 'virt-s1/bootc-workflow-test'
+    runs-on: container-runner
+    container: quay.io/fedora/fedora:39
+    steps:
+      - name: Check RHEL 9 image info
+        id: check_image_rhel9
+        run: |
+          sudo dnf install -y skopeo
+
+          IMAGE_DIGEST=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Digest')
+          IMAGE_VERSION=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Labels.version')
+          KERNEL_VERSION=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Labels."ostree.linux"')
+          COMPOSE_ID=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Labels."redhat.compose-id"')
+
+          echo "image_digest=$IMAGE_DIGEST" >> $GITHUB_OUTPUT
+          echo "image_version=$IMAGE_VERSION" >> $GITHUB_OUTPUT
+          echo "kernel_version=$KERNEL_VERSION" >> $GITHUB_OUTPUT
+          echo "compose_id=$COMPOSE_ID" >> $GITHUB_OUTPUT
+        env:
+          RHEL_REGISTRY_URL: ${{ secrets.RHEL_REGISTRY_URL }}
+
+    outputs:
+      image_digest: ${{ steps.check_image_rhel9.outputs.image_digest }}
+      image_version: ${{ steps.check_image_rhel9.outputs.image_version }}
+      kernel_version: ${{ steps.check_image_rhel9.outputs.kernel_version }}
+      compose_id: ${{ steps.check_image_rhel9.outputs.compose_id }}
+
+  create-pr:
+    needs: check-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Save tested container image digest
+        run: echo "${{ needs.check-image.outputs.image_digest }}" >> files/pr_file
+
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "build: rhel9-rhel_bootc:rhel-9.4 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
+          committer: cloudkitebot <henrywangxf1@gmail.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          branch: cpr
+          branch-suffix: random
+          delete-branch: true
+          title: "rhel9-rhel_bootc:rhel-9.4 - ${{ needs.check-image.outputs.image_version }} - ${{ steps.date.outputs.date }}"
+          labels: auto-merge,rhel9-rhel_bootc:rhel-9.4
+          body: |
+            rhel9-rhel_bootc:rhel-9.4 image ${{ needs.check-image.outputs.image_version }}
+            - Date: ${{ steps.date.outputs.date }}
+            - Image URL: quay.io/centos-bootc/centos-bootc:stream9
+            - Image Digest: ${{ needs.check-image.outputs.image_digest }}
+            - Image Version: ${{ needs.check-image.outputs.image_version }}
+            - Kernel Version: ${{ needs.check-image.outputs.kernel_version }}
+            - Compose ID: ${{ needs.check-image.outputs.compose_id }}
+
+      - name: Enable Pull Request Automerge
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        uses: peter-evans/enable-pull-request-automerge@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+          merge-method: rebase
+
+      - name: Add a comment to trigger test workflow
+        uses: peter-evans/create-or-update-comment@v2
+        with:
+          token: ${{ secrets.PAT }}
+          issue-number: ${{ steps.cpr.outputs.pull-request-number }}
+          body: /test-rhel94
+
+      - name: Create a project card to track compose test result
+        uses: peter-evans/create-or-update-project-card@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          project-name: bootc test
+          column-name: rhel9-rhel_bootc:rhel-9.4
+          issue-number: ${{ steps.cpr.outputs.pull-request-number }}
