@@ -63,7 +63,9 @@ esac
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
+[[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)/g" files/auth.template | tee auth.json > /dev/null
+[[ $debug == 1 ]] && set -x
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"

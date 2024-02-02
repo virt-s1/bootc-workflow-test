@@ -1,5 +1,11 @@
 discover:
   how: fmf
+adjust:
+  - when: arch == x86_64
+    provision:
+      hardware:
+        virtualization:
+          is-supported: true
 prepare:
   - how: install
     package:
@@ -13,7 +19,7 @@ prepare:
   - how: shell
     script: |
       pip install boto3 botocore openstacksdk
-      ansible-galaxy collection install openstack.cloud community.general amazon.aws ansible.posix
+      ansible-galaxy collection install openstack.cloud community.general community.libvirt amazon.aws ansible.posix
   - how: shell
     script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install
 execute:
@@ -33,7 +39,7 @@ execute:
 
 /gcp:
   summary: Run os-replace test on gcp
-  tag: [gcp, stable]
+  tag: gcp
   environment+:
     PLATFORM: gcp
   prepare+:
@@ -42,8 +48,6 @@ execute:
     - how: install
       package:
         - google-cloud-cli
-  discover+:
-    test: os-replace
   adjust:
     - when: arch == x86_64 or arch == aarch64
       discover+:
@@ -57,8 +61,6 @@ execute:
   tag: aws
   environment+:
     PLATFORM: aws
-  discover+:
-    test: os-replace
   adjust:
     - when: arch == x86_64 or arch == aarch64
       discover+:
@@ -66,3 +68,23 @@ execute:
     - when: arch != x86_64 and arch != aarch64
       discover+:
         test: N/A
+
+/local:
+  summary: Run os-replace test locally (nested)
+  tag: [local, stable]
+  environment+:
+    PLATFORM: libvirt
+  prepare+:
+    - how: install
+      package:
+        - python3-libvirt
+        - python3-lxml
+        - qemu-kvm
+        - libvirt
+        - xorriso
+  adjust:
+    - when: arch == x86_64
+      discover+:
+        test: os-replace
+    - when: arch != x86_64
+      enabled: false

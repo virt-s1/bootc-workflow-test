@@ -1,0 +1,46 @@
+<domain type='kvm'>
+  <name>{{ instance_name }}</name>
+  <memory unit='KiB'>2097152</memory>
+  <currentMemory unit='KiB'>2097152</currentMemory>
+  <vcpu>1</vcpu>
+  <os>
+    <boot dev='hd'/>
+{% if arch == 'x86_64' %}
+    <type arch='x86_64' machine='q35'>hvm</type>
+{% elif arch == 'aarch64' %}
+    <loader readonly='yes' type='pflash'>/usr/share/AAVMF/AAVMF_CODE.fd</loader>
+    <nvram template='/usr/share/AAVMF/AAVMF_VARS.fd'>/var/lib/libvirt/qemu/nvram/AAVMF_VARS.fd</nvram>
+{% elif arch == 'ppc64le' %}
+    <type arch='ppc64le' machine='pseries'>hvm</type>
+{% elif arch == 's390x' %}
+    <type arch='s390x' machine='s390-ccw-virtio'>hvm</type>
+{% endif %}
+  </os>
+  <features>
+    <apic/>
+  </features>
+{% if arch == 'x86_64' or arch == 'ppc64le' or arch == 's390x' %}
+  <cpu mode='host-model'/>
+{% elif arch == 'aarch64' %}
+  <cpu mode='host-passthrough'/>
+{% endif %}
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ image_path }}/{{ rhel_guest_image_fname }}'/>
+      <target dev='sda' bus='scsi'/>
+    </disk>
+    <disk type='file' device='cdrom'>
+      <driver name='qemu' type='raw'/>
+      <source file='{{ image_path }}/nocloud.iso'/>
+      <target dev='sdb'/>
+      <readonly/>
+    </disk>
+    <interface type='network'>
+      <source network='default' bridge='virbr0'/>
+      <model type='virtio'/>
+    </interface>
+    <console type='pty'/>
+  </devices>
+</domain>
