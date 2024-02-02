@@ -15,12 +15,33 @@
     - set_fact:
         random_num: "{{ 9999 | random(start=1001) }}"
 
-    - name: Get rhel-guest-image filename
-      shell: curl -s http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")rhel-guest-image-[^"]+.qcow2(?=")'
-      register: out
+    - name: Get CentOS-Stream-GenericCloud image filename
+      block:
+        - name: Get CentOS-Stream-GenericCloud image filename
+          shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
+          register: out
 
-    - set_fact:
-        rhel_guest_image_fname: "{{ out.stdout }}"
+        - set_fact:
+            rhel_guest_image_fname: "{{ out.stdout }}"
+      when: "'centos' in test_os"
+
+    - name: Get rhel-guest-image filename
+      block:
+        - name: Get rhel-guest-image filename
+          shell: curl -s http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")rhel-guest-image-[^"]+.qcow2(?=")'
+          register: out
+
+        - set_fact:
+            rhel_guest_image_fname: "{{ out.stdout }}"
+      when: "'rhel' in test_os"
+
+    - name: Download CentOS-Stream-GenericCloud image
+      uri:
+        url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
+        dest: "{{ image_path }}"
+        creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
+        validate_certs: false
+      when: "'centos' in test_os"
 
     - name: Download rhel-guest-image
       uri:
@@ -28,6 +49,7 @@
         dest: "{{ image_path }}"
         creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
+      when: "'rhel' in test_os"
 
     - name: Read ssh_key_pub content
       command: cat "{{ ssh_key_pub }}"
