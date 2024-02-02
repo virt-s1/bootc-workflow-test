@@ -69,7 +69,7 @@ jobs:
           pull_request_status_name: "bootc-rhel94-x86-openstack-replace"
           tmt_plan_regex: "openstack"
           tf_scope: private
-          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ DOWNLOAD_NODE }};TEST_OS=rhel-9-4"
+          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=rhel-9-4"
 
   rhel94-x86-gcp-replace:
     needs: pr-info
@@ -92,7 +92,7 @@ jobs:
           pull_request_status_name: "bootc-rhel94-x86-gcp-replace"
           tmt_plan_regex: "gcp"
           tf_scope: private
-          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
+          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
 
   rhel94-x86-aws-replace:
     needs: pr-info
@@ -115,4 +115,4 @@ jobs:
           pull_request_status_name: "bootc-rhel94-x86-aws-replace"
           tmt_plan_regex: "aws"
           tf_scope: private
-          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
+          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};TEST_OS=centos-stream-9"
