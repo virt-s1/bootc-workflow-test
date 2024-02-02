@@ -1,5 +1,5 @@
 ---
-name: bootc Image Test on CentOS Stream 9
+name: centos-bootc:stream9 Test
 
 on:
   issue_comment:
