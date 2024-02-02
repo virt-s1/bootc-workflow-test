@@ -68,7 +68,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
-          tmt_context: "x86_64"
+          tmt_context: "arch=x86_64"
           pull_request_status_name: "bootc-rhel94-x86-openstack-replace"
           tmt_plan_regex: "openstack"
           tf_scope: private
@@ -93,7 +93,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
-          tmt_context: "x86_64"
+          tmt_context: "arch=x86_64"
           pull_request_status_name: "bootc-rhel94-x86-gcp-replace"
           tmt_plan_regex: "gcp"
           tf_scope: private
@@ -118,7 +118,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
-          tmt_context: "x86_64"
+          tmt_context: "arch=x86_64"
           pull_request_status_name: "bootc-rhel94-x86-aws-replace"
           tmt_plan_regex: "aws"
           tf_scope: private
@@ -143,7 +143,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
-          tmt_context: "x86_64"
+          tmt_context: "arch=x86_64"
           pull_request_status_name: "bootc-rhel94-x86-libvirt-replace"
           tmt_plan_regex: "local"
           tf_scope: private
