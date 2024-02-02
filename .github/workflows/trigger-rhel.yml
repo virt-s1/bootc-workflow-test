@@ -16,7 +16,7 @@ jobs:
       - name: Check RHEL 9 image info
         id: check_image_rhel9
         run: |
-          sudo dnf install -y skopeo
+          sudo dnf install -y skopeo jq
 
           IMAGE_DIGEST=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Digest')
           IMAGE_VERSION=$(skopeo inspect --tls-verify=false "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-9.4" | jq -r '.Labels.version')
