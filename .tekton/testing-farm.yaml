@@ -99,9 +99,9 @@ spec:
           skopeo inspect docker://$IMAGE > skopeo_inspect.json
           COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
           if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
-            COMPOSE=$(echo "${COMPOSE_ID}" | grep -oP '^RHEL-[0-9]+\.[0-9]+\.[0-9]+')-Nightly
+            COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
           elif [[ "${COMPOSE_ID}" == "CentOS-Stream-"* ]]; then
-            COMPOSE=$(echo "${COMPOSE_ID}" | grep -oP '^CentOS-Stream-[0-9]+')
+            COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^CentOS-Stream-[0-9][0-9]*')
           else
             COMPOSE=Fedora-Rawhide
           fi
