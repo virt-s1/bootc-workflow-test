@@ -1,9 +1,11 @@
 discover:
   how: fmf
-provision:
-  hardware:
-    virtualization:
-      is-supported: true
+adjust+:
+  - when: arch != aarch64
+    provision:
+      hardware:
+        virtualization:
+          is-supported: true
 prepare:
   - how: install
     package:
@@ -28,7 +30,7 @@ execute:
   tag: openstack
   environment+:
     PLATFORM: openstack
-  adjust:
+  adjust+:
     - when: arch == x86_64
       discover+:
         test: os-replace
@@ -46,7 +48,7 @@ execute:
     - how: install
       package:
         - google-cloud-cli
-  adjust:
+  adjust+:
     - when: arch == x86_64 or arch == aarch64
       discover+:
         test: os-replace
@@ -59,7 +61,7 @@ execute:
   tag: aws
   environment+:
     PLATFORM: aws
-  adjust:
+  adjust+:
     - when: arch == x86_64 or arch == aarch64
       discover+:
         test: os-replace
@@ -80,7 +82,7 @@ execute:
         - qemu-kvm
         - libvirt
         - xorriso
-  adjust:
+  adjust+:
     - when: arch == x86_64
       discover+:
         test: os-replace
