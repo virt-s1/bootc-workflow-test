@@ -1,0 +1,128 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: testing-farm
+spec:
+  description: Initiate testing-farm test given a list of container images
+  params:
+    - name: SNAPSHOT
+      description: A list of container images that should undergo testing
+    - name: GIT_URL
+      description: URL of the GIT repository that contains the tests.
+    - name: GIT_REF
+      default: "main"
+      description: Branch of the git repository used containing the tests
+    - name: COMPOSE
+      default: "Fedora-Rawhide"
+      description: Compose to use for the system-under-test.
+    - name: ARCH
+      default: "x86_64"
+      description: Comma-separated list of architectures to run against.
+    - name: TIMEOUT
+      default: "720"
+      description: Set the timeout for the request in minutes. If the test takes longer than this, it will be terminated.
+    - name: TESTING_FARM_API_URL
+      default: https://api.dev.testing-farm.io/v0.1
+      description: The testing-farm instance API to use
+    - name: DOWNLOAD_NODE
+    - name: RHEL_REGISTRY_URL
+    - name: GCP_PROJECT
+    - name: AWS_REGION
+  volumes:
+    - name: testing-farm-secret
+      secret:
+        secretName: testing-farm-secret
+  steps:
+    - image: quay.io/testing-farm/cli:latest
+      volumeMounts:
+        - name: testing-farm-secret
+          mountPath: "/etc/secrets"
+          readOnly: true
+      env:
+        - name: SNAPSHOT
+          value: $(params.SNAPSHOT)
+        - name: GIT_URL
+          value: $(params.GIT_URL)
+        - name: GIT_REF
+          value: $(params.GIT_REF)
+        - name: COMPOSE
+          value: $(params.COMPOSE)
+        - name: ARCH
+          value: $(params.ARCH)
+        - name: TIMEOUT
+          value: $(params.TIMEOUT)
+        - name: TESTING_FARM_API_URL
+          value: $(params.TESTING_FARM_API_URL)
+        - name: DOWNLOAD_NODE
+          value: $(params.DOWNLOAD_NODE)
+        - name: RHEL_REGISTRY_URL
+          value: $(params.RHEL_REGISTRY_URL)
+        - name: GCP_PROJECT
+          value: $(params.GCP_PROJECT)
+        - name: AWS_REGION
+          value: $(params.AWS_REGION)
+        - name: GCP_SERVICE_ACCOUNT_FILE_B64
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "GCP_SERVICE_ACCOUNT_FILE_B64"
+        - name: QUAY_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "QUAY_USERNAME"
+        - name: QUAY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "QUAY_PASSWORD"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "AWS_ACCESS_KEY_ID"
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "AWS_SECRET_ACCESS_KEY"
+      script: |
+        #!/usr/bin/env bash
+
+        export TESTING_FARM_API_TOKEN=$(cat /etc/secrets/testing-farm-token)
+
+        apk add skopeo jq
+
+        IMAGES=$(echo "${SNAPSHOT}" | jq -r '.components[].containerImage')
+        for IMAGE in $IMAGES; do
+          echo $IMAGE
+          skopeo inspect docker://$IMAGE > skopeo_inspect.json
+          COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
+          if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
+            COMPOSE=$(echo "${COMPOSE_ID}" | grep -oP '^RHEL-[0-9]+\.[0-9]+\.[0-9]+')-Nightly
+          elif [[ "${COMPOSE_ID}" == "CentOS-Stream-"* ]]; then
+            COMPOSE=$(echo "${COMPOSE_ID}" | grep -oP '^CentOS-Stream-[0-9]+')
+          else
+            COMPOSE=Fedora-Rawhide
+          fi
+        done
+
+        testing-farm request \
+          --plan-filter "tag: stable" \
+          --environment SNAPSHOT="$(echo ${SNAPSHOT} | base64 -w 0)" \
+          --environment DOWNLOAD_NODE="${DOWNLOAD_NODE}" \
+          --environment RHEL_REGISTRY_URL="${RHEL_REGISTRY_URL}" \
+          --environment GCP_PROJECT="${GCP_PROJECT}" \
+          --environment AWS_REGION="${AWS_REGION}" \
+          --environment CI="RHTAP" \
+          --secret QUAY_USERNAME="${QUAY_USERNAME}" \
+          --secret QUAY_PASSWORD="${QUAY_PASSWORD}" \
+          --secret GCP_SERVICE_ACCOUNT_FILE_B64="${GCP_SERVICE_ACCOUNT_FILE_B64}" \
+          --secret AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+          --secret AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+          --git-url "${GIT_URL}" \
+          --git-ref "${GIT_REF}" \
+          --compose "${COMPOSE}" \
+          --arch "${ARCH}" \
+          --context "arch=${ARCH}" \
+          --timeout "${TIMEOUT}"
