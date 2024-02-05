@@ -30,6 +30,7 @@ case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
         TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="cloud-user"
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
@@ -41,6 +42,7 @@ case "$TEST_OS" in
     "centos-stream-9")
         IMAGE_NAME="centos-bootc"
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="cloud-user"
         ADD_REPO=""
         if [[ "$PLATFORM" == "aws" ]]; then
@@ -51,6 +53,7 @@ case "$TEST_OS" in
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="fedora"
         ADD_REPO=""
         ;;
