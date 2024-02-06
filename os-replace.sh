@@ -40,7 +40,7 @@ case "$TEST_OS" in
         fi
         ;;
     "centos-stream-9")
-        IMAGE_NAME="centos-bootc"
+        IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="cloud-user"

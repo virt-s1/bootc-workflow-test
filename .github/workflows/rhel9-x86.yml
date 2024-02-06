@@ -51,6 +51,10 @@ jobs:
 
   rhel94-x86-openstack-replace:
     needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86-openstack-replace')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -76,6 +80,10 @@ jobs:
 
   rhel94-x86-gcp-replace:
     needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86-gcp-replace')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -101,6 +109,10 @@ jobs:
 
   rhel94-x86-aws-replace:
     needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86-aws-replace')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -126,6 +138,10 @@ jobs:
 
   rhel94-x86-libvirt-replace:
     needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86') ||
+            endsWith(github.event.comment.body, '/test-rhel94-x86-libvirt-replace')) }}
     runs-on: ubuntu-latest
 
     steps:
