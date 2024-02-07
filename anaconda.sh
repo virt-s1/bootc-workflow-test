@@ -15,7 +15,7 @@ function redprint {
 }
 
 TEMPDIR=$(mktemp -d)
-# trap 'rm -rf -- "$TEMPDIR"' EXIT
+trap 'rm -rf -- "$TEMPDIR"' EXIT
 
 # SSH configurations
 SSH_USER="admin"
@@ -73,7 +73,6 @@ TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Generate auth.json for registry auth"
-QUAY_SECRET=$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)
 sed "s/REPLACE_ME/$QUAY_SECRET/g" files/auth.template | tee auth.json > /dev/null
 
 greenprint "Create $TEST_OS installation Containerfile"
