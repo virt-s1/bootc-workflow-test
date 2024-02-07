@@ -94,9 +94,13 @@ spec:
         apk add skopeo jq
 
         IMAGES=$(echo "${SNAPSHOT}" | jq -r '.components[].containerImage')
+        COUNT=0
         for IMAGE in $IMAGES; do
           echo $IMAGE
-          skopeo inspect docker://$IMAGE > skopeo_inspect.json
+          skopeo inspect docker://"$IMAGE" > skopeo_inspect.json
+          skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE##*/}"
+          IMAGE_URL=quay.io/redhat_emp1/qe-${IMAGE##*/}
+          echo "$IMAGE_URL"
           COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
           if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
             COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
@@ -105,11 +109,17 @@ spec:
           else
             COMPOSE=Fedora-Rawhide
           fi
+          COUNT=$(expr $COUNT + 1)
         done
+
+        if [[ ${COUNT} -ne 1 ]]; then
+          echo "Error: multiple images in this application: ${IMAGES}"
+          exit 1
+        fi
 
         testing-farm request \
           --plan-filter "tag: stable" \
-          --environment SNAPSHOT="$(echo ${SNAPSHOT} | base64 -w 0)" \
+          --environment IMAGE_URL="${IMAGE_URL}" \
           --environment DOWNLOAD_NODE="${DOWNLOAD_NODE}" \
           --environment RHEL_REGISTRY_URL="${RHEL_REGISTRY_URL}" \
           --environment GCP_PROJECT="${GCP_PROJECT}" \
