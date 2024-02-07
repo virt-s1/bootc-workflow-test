@@ -14,6 +14,7 @@ function run_tests() {
 }
 
 if [[ $CI == "RHTAP" ]]; then
+	podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 	skopeo inspect docker://"$IMAGE_URL" >skopeo_inspect.json
 	COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
 	if [[ "${COMPOSE_ID}" == "RHEL-9.4"* ]]; then

@@ -98,8 +98,10 @@ spec:
         for IMAGE in $IMAGES; do
           echo $IMAGE
           skopeo inspect docker://"$IMAGE" > skopeo_inspect.json
-          skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE##*/}"
-          IMAGE_URL=quay.io/redhat_emp1/qe-${IMAGE##*/}
+          IMAGE_NAME=$(echo "${IMAGE##*/}" | cut -d @ -f 1)
+          IMAGE_TAG=$(echo "${IMAGE##*/}" | cut -d : -f 2)
+          skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
+          IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
           COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
           if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
