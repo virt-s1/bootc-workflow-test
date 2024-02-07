@@ -1,5 +1,5 @@
 ---
-name: centos-bootc-dev:stream9 Test
+name: centos-bootc:stream9 Anaconda Installation Test
 
 on:
   issue_comment:
@@ -9,13 +9,16 @@ on:
 jobs:
   pr-info:
     if: ${{ github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-openstack-replace') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-gcp-replace') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-aws-replace') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-libvirt-replace') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-anaconda')) }}
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-aarch64') ||
+            endsWith(github.event.comment.body, '/test-cs9-aarch64-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-bios') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-bios-lvm') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-uefi') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-uefi-lvm')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Query author repository permissions
@@ -49,12 +52,14 @@ jobs:
       ref: ${{ fromJson(steps.pr-api.outputs.data).head.ref }}
       repo_url: ${{ fromJson(steps.pr-api.outputs.data).head.repo.html_url }}
 
-  cs9-dev-x86-openstack-replace:
+  cs9-x86-anaconda-bios:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-openstack-replace')) }}
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-bios')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -73,17 +78,21 @@ jobs:
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
           tmt_context: "arch=x86_64"
-          pull_request_status_name: "bootc-cs9-dev-x86-openstack-replace"
-          tmt_plan_regex: "openstack"
+          pull_request_status_name: "bootc-cs9-x86-anaconda-bios"
+          update_pull_request_status: true
+          tmt_plan_regex: "bios-standard"
           tf_scope: private
-          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;FIRMWARE=bios;PART_LVM=false"
 
-  cs9-dev-x86-gcp-replace:
+  cs9-x86-anaconda-bios-lvm:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-gcp-replace')) }}
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-bios-lvm')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -102,17 +111,21 @@ jobs:
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
           tmt_context: "arch=x86_64"
-          pull_request_status_name: "bootc-cs9-dev-x86-gcp-replace"
-          tmt_plan_regex: "gcp"
+          pull_request_status_name: "bootc-cs9-x86-anaconda-bios-lvm"
+          update_pull_request_status: true
+          tmt_plan_regex: "bios-standard"
           tf_scope: private
-          secrets: "GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;FIRMWARE=bios;PART_LVM=true"
 
-  cs9-dev-x86-aws-replace:
+  cs9-x86-anaconda-uefi:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-aws-replace')) }}
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-uefi')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -131,17 +144,21 @@ jobs:
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
           tmt_context: "arch=x86_64"
-          pull_request_status_name: "bootc-cs9-dev-x86-aws-replace"
-          tmt_plan_regex: "aws"
+          pull_request_status_name: "bootc-cs9-x86-anaconda-uefi"
+          update_pull_request_status: true
+          tmt_plan_regex: "uefi-standard"
           tf_scope: private
-          secrets: "AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;FIRMWARE=uefi;PART_LVM=false"
 
-  cs9-dev-x86-libvirt-replace:
+  cs9-x86-anaconda-uefi-lvm:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-x86-libvirt-replace')) }}
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-x86-anaconda-uefi-lvm')) }}
     runs-on: ubuntu-latest
 
     steps:
@@ -160,7 +177,9 @@ jobs:
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: "x86_64"
           tmt_context: "arch=x86_64"
-          pull_request_status_name: "bootc-cs9-dev-x86-libvirt-replace"
-          tmt_plan_regex: "local"
+          pull_request_status_name: "bootc-cs9-x86-anaconda-uefi-lvm"
+          update_pull_request_status: true
+          tmt_plan_regex: "uefi-standard"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;FIRMWARE=uefi;PART_LVM=true"
