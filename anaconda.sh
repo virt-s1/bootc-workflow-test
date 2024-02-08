@@ -115,7 +115,7 @@ poweroff
 
 %pre
 #!/bin/sh
-curl -kLO https://${CERT_URL}/certs/2022-IT-Root-CA.pem --output-dir /etc/pki/ca-trust/source/anchors
+curl -kLO ${CERT_URL}/certs/2022-IT-Root-CA.pem --output-dir /etc/pki/ca-trust/source/anchors
 update-ca-trust
 cat > /etc/ostree/auth.json <<EOF
 {
