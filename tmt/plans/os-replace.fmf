@@ -54,9 +54,9 @@ execute:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
 
-/local:
+/libvirt:
   summary: Run os-replace test locally (nested)
-  tag: [local, stable]
+  tag: [libvirt, stable]
   environment+:
     PLATFORM: libvirt
   prepare+:
