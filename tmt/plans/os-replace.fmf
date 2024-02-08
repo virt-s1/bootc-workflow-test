@@ -1,11 +1,6 @@
 discover:
   how: fmf
-adjust+:
-  - when: arch != aarch64
-    provision:
-      hardware:
-        virtualization:
-          is-supported: true
+  test: os-replace
 prepare:
   - how: install
     package:
@@ -14,6 +9,7 @@ prepare:
       - gcc
       - podman
       - skopeo
+      - jq
       - python3-devel
       - unzip
   - how: shell
@@ -31,9 +27,6 @@ execute:
   environment+:
     PLATFORM: openstack
   adjust+:
-    - when: arch == x86_64
-      discover+:
-        test: os-replace
     - when: arch != x86_64
       enabled: false
 
@@ -49,12 +42,8 @@ execute:
       package:
         - google-cloud-cli
   adjust+:
-    - when: arch == x86_64 or arch == aarch64
-      discover+:
-        test: os-replace
     - when: arch != x86_64 and arch != aarch64
-      discover+:
-        test: N/A
+      enabled: false
 
 /aws:
   summary: Run os-replace test on aws
@@ -62,12 +51,8 @@ execute:
   environment+:
     PLATFORM: aws
   adjust+:
-    - when: arch == x86_64 or arch == aarch64
-      discover+:
-        test: os-replace
     - when: arch != x86_64 and arch != aarch64
-      discover+:
-        test: N/A
+      enabled: false
 
 /local:
   summary: Run os-replace test locally (nested)
@@ -83,8 +68,10 @@ execute:
         - libvirt
         - xorriso
   adjust+:
-    - when: arch == x86_64
-      discover+:
-        test: os-replace
-    - when: arch != x86_64
+    - when: arch == ppc64le
       enabled: false
+    - when: arch != ppc64le
+      provision+:
+        hardware:
+          virtualization:
+            is-supported: true

@@ -1,0 +1,65 @@
+discover:
+  how: fmf
+  test: anaconda
+adjust+:
+  - when: arch != ppc64le
+    provision:
+      hardware:
+        cpu:
+          processors: ">= 2"
+        memory: ">= 6 GB"
+        virtualization:
+          is-supported: true
+prepare:
+  - how: install
+    package:
+      - ansible-core
+      - gcc
+      - podman
+      - skopeo
+      - jq
+      - unzip
+      - qemu-kvm
+      - libvirt
+      - xorriso
+  - how: shell
+    script: |
+      ansible-galaxy collection install community.general
+execute:
+  how: tmt
+
+/anaconda-uefi-lvm:
+  summary: Run anaconda test locally (nested)
+  environment+:
+    FIRMWARE: uefi
+    PARTITION: lvm
+  adjust+:
+    - when: arch != x86_64 and arch != aarch64
+      enabled: false
+
+/anaconda-uefi-standard:
+  summary: Run anaconda test locally (nested)
+  environment+:
+    FIRMWARE: uefi
+    PARTITION: standard
+  adjust+:
+    - when: arch != x86_64 and arch != aarch64
+      enabled: false
+
+/anaconda-bios-lvm:
+  summary: Run anaconda test locally (nested)
+  environment+:
+    FIRMWARE: bios
+    PARTITION: lvm
+  adjust+:
+    - when: arch != x86_64
+      enabled: false
+
+/anaconda-bios-standard:
+  summary: Run anaconda test locally (nested)
+  environment+:
+    FIRMWARE: bios
+    PARTITION: standard
+  adjust+:
+    - when: arch != x86_64
+      enabled: false

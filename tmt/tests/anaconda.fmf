@@ -1,0 +1,4 @@
+test: ./test.sh
+duration: 30m
+environment:
+  TEST_CASE: anaconda
