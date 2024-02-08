@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -exuo pipefail
 
 # Prepare running environment
 ./tools/setup.sh
@@ -31,7 +31,7 @@ INVENTORY_FILE="${TEMPDIR}/inventory"
 KS_FILE=${TEMPDIR}/ks.cfg
 GUEST_IP="192.168.100.50"
 FIRMWARE=${FIRMWARE:-"bios"}
-PART_LVM=${PART_LVM:-"false"}
+PARTITION=${PARTITION:-"standard"}
 
 case "$TEST_OS" in
     "rhel-9-4")
@@ -137,65 +137,28 @@ zerombr
 clearpart --all --initlabel --disklabel=gpt
 STOPHERE
 
-greenprint "Configure console log file"
-VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-console.log"
-sudo rm -f "$VIRT_LOG"
-touch "$VIRT_LOG"
-sudo chown qemu:qemu "$VIRT_LOG"
-
-# Test BIOS scenario
-if [[ "$FIRMWARE" == bios ]]; then
-
-    if [[ "$PART_LVM" == "true" ]]; then
-        greenprint "LVM partition setup"
-        tee -a "$KS_FILE" > /dev/null << EOF
+if [[ "$PARTITION" == "lvm" ]]; then
+    greenprint "LVM partition setup"
+    tee -a "$KS_FILE" > /dev/null << EOF
 part biosboot --size=1 --fstype=biosboot
 part /boot --size=1000 --fstype=ext4 --label=boot
 part pv.01 --grow
 volgroup bootc pv.01
 logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
 EOF
-    else
-        greenprint "Partition setup"
-        echo "autopart --nohome --noswap --type=plain --fstype=xfs" >> "$KS_FILE"
-    fi
-
-    greenprint "Download boot.iso"
-    curl -O "${BOOT_LOCATION}images/boot.iso"
-    sudo mv boot.iso /var/lib/libvirt/images
-    LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
-
-    greenprint "Install $TEST_OS via anaconda on BIOS VM"
-    sudo virt-install --initrd-inject="$KS_FILE" \
-                      --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                      --name="bootc-${TEST_OS}-${FIRMWARE}"\
-                      --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
-                      --ram 3072 \
-                      --vcpus 2 \
-                      --network network=integration,mac=34:49:22:B0:83:30 \
-                      --os-variant "$OS_VARIANT" \
-                      --location "$LOCAL_BOOT_LOCATION" \
-                      --console pipe,source.path="$VIRT_LOG" \
-                      --nographics \
-                      --noautoconsole \
-                      --wait=-1 \
-                      --noreboot
-# Test UEFI scenario
 else
-    if [[ "$PART_LVM" == "true" ]]; then
-        greenprint "LVM partition setup"
-        tee -a "$KS_FILE" > /dev/null << EOF
-part /boot/efi --size=100 --fstype=efi
-part /boot --size=1000 --fstype=ext4 --label=boot
-part pv.01 --grow
-volgroup bootc pv.01
-logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
-EOF
-    else
-        greenprint "Partition setup"
-        echo "autopart --nohome --noswap --type=plain --fstype=xfs" >> "$KS_FILE"
-    fi
+    greenprint "Standard partition setup"
+    echo "autopart --nohome --noswap --type=plain --fstype=xfs" >> "$KS_FILE"
+fi
 
+greenprint "Configure console log file"
+VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-console.log"
+sudo rm -f "$VIRT_LOG"
+touch "$VIRT_LOG"
+sudo chown qemu:qemu "$VIRT_LOG"
+
+# HTTP Boot only runs on x86_64 + LVM
+if [[ "$ARCH" == "x86_64" ]] && [[ "$PARTITION" == "lvm" ]]; then
     greenprint "📥 Install httpd and configure HTTP boot server"
     sudo dnf install -y httpd
     sudo systemctl enable --now httpd.service
@@ -216,8 +179,8 @@ EOF
     greenprint "📝 Update grub.cfg to work with HTTP boot"
     sudo tee -a "${GRUB_CFG}" > /dev/null << EOF
 menuentry 'Install Red Hat Enterprise Linux for Bootc' --class fedora --class gnu-linux --class gnu --class os {
-        linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
-        initrdefi /httpboot/images/pxeboot/initrd.img
+    linuxefi /httpboot/images/pxeboot/vmlinuz inst.stage2=http://192.168.100.1/httpboot inst.ks=http://192.168.100.1/ks.cfg inst.text console=ttyS0,115200
+    initrdefi /httpboot/images/pxeboot/initrd.img
 }
 EOF
     sudo sed -i 's/default="1"/default="3"/' "${GRUB_CFG}"
@@ -237,6 +200,27 @@ EOF
                       --boot "$BOOT_ARGS" \
                       --pxe \
                       --os-variant "$OS_VARIANT" \
+                      --console pipe,source.path="$VIRT_LOG" \
+                      --nographics \
+                      --noautoconsole \
+                      --wait=-1 \
+                      --noreboot
+else
+    greenprint "Download boot.iso"
+    curl -O "${BOOT_LOCATION}images/boot.iso"
+    sudo mv boot.iso /var/lib/libvirt/images
+    LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+
+    greenprint "Install $TEST_OS via anaconda on BIOS VM"
+    sudo virt-install --initrd-inject="$KS_FILE" \
+                      --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
+                      --name="bootc-${TEST_OS}-${FIRMWARE}"\
+                      --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
+                      --ram 3072 \
+                      --vcpus 2 \
+                      --network network=integration,mac=34:49:22:B0:83:30 \
+                      --os-variant "$OS_VARIANT" \
+                      --location "$LOCAL_BOOT_LOCATION" \
                       --console pipe,source.path="$VIRT_LOG" \
                       --nographics \
                       --noautoconsole \
@@ -328,13 +312,13 @@ unset ANSIBLE_CONFIG
 sudo virsh destroy "bootc-${TEST_OS}-${FIRMWARE}"
 if [[ "$FIRMWARE" == bios ]]; then
     sudo virsh undefine "bootc-${TEST_OS}-${FIRMWARE}"
-    sudo rm -f "$LOCAL_BOOT_LOCATION"
 else
     sudo virsh undefine "bootc-${TEST_OS}-${FIRMWARE}" --nvram
     sudo rm -rf "${HTTPD_PATH}/httpboot"
     sudo rm -f "${HTTPD_PATH}/ks.cfg"
 fi
 sudo virsh vol-delete --pool images "bootc-${TEST_OS}-${FIRMWARE}.qcow2"
+sudo rm -f "$LOCAL_BOOT_LOCATION"
 
 greenprint "🎉 All tests passed."
 exit 0
