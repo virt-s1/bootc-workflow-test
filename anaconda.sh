@@ -314,11 +314,15 @@ if [[ "$FIRMWARE" == bios ]]; then
     sudo virsh undefine "bootc-${TEST_OS}-${FIRMWARE}"
 else
     sudo virsh undefine "bootc-${TEST_OS}-${FIRMWARE}" --nvram
-    sudo rm -rf "${HTTPD_PATH}/httpboot"
-    sudo rm -f "${HTTPD_PATH}/ks.cfg"
 fi
 sudo virsh vol-delete --pool images "bootc-${TEST_OS}-${FIRMWARE}.qcow2"
-sudo rm -f "$LOCAL_BOOT_LOCATION"
+
+if [[ "$ARCH" == "x86_64" ]] && [[ "$PARTITION" == "lvm" ]]; then
+    sudo rm -rf "${HTTPD_PATH}/httpboot"
+    sudo rm -f "${HTTPD_PATH}/ks.cfg"
+else
+    sudo rm -f "$LOCAL_BOOT_LOCATION"
+fi
 
 greenprint "🎉 All tests passed."
 exit 0
