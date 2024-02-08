@@ -152,13 +152,13 @@ else
 fi
 
 greenprint "Configure console log file"
-VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-console.log"
+VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-${PARTITION}-console.log"
 sudo rm -f "$VIRT_LOG"
 touch "$VIRT_LOG"
 sudo chown qemu:qemu "$VIRT_LOG"
 
 # HTTP Boot only runs on x86_64 + LVM
-if [[ "$ARCH" == "x86_64" ]] && [[ "$PARTITION" == "lvm" ]]; then
+if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]]; then
     greenprint "📥 Install httpd and configure HTTP boot server"
     sudo dnf install -y httpd
     sudo systemctl enable --now httpd.service
@@ -191,7 +191,7 @@ EOF
     greenprint "👿 Running restorecon on /var/www/html"
     sudo restorecon -Rv /var/www/html/
 
-    greenprint "Install $TEST_OS via anaconda on UEFI VM"
+    greenprint "Install $TEST_OS via HTTP Boot on UEFI VM"
     sudo virt-install --name="bootc-${TEST_OS}-${FIRMWARE}"\
                       --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
                       --ram 3072 \
@@ -211,21 +211,40 @@ else
     sudo mv boot.iso /var/lib/libvirt/images
     LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
 
-    greenprint "Install $TEST_OS via anaconda on BIOS VM"
-    sudo virt-install --initrd-inject="$KS_FILE" \
-                      --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
-                      --name="bootc-${TEST_OS}-${FIRMWARE}"\
-                      --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
-                      --ram 3072 \
-                      --vcpus 2 \
-                      --network network=integration,mac=34:49:22:B0:83:30 \
-                      --os-variant "$OS_VARIANT" \
-                      --location "$LOCAL_BOOT_LOCATION" \
-                      --console pipe,source.path="$VIRT_LOG" \
-                      --nographics \
-                      --noautoconsole \
-                      --wait=-1 \
-                      --noreboot
+    if [[ "$FIRMWARE" == "bios" ]]; then
+        greenprint "Install $TEST_OS via anaconda on $FIRMWARE VM"
+        sudo virt-install --initrd-inject="$KS_FILE" \
+                          --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
+                          --name="bootc-${TEST_OS}-${FIRMWARE}"\
+                          --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
+                          --ram 3072 \
+                          --vcpus 2 \
+                          --network network=integration,mac=34:49:22:B0:83:30 \
+                          --os-variant "$OS_VARIANT" \
+                          --location "$LOCAL_BOOT_LOCATION" \
+                          --console pipe,source.path="$VIRT_LOG" \
+                          --nographics \
+                          --noautoconsole \
+                          --wait=-1 \
+                          --noreboot
+    else
+        greenprint "Install $TEST_OS via anaconda on $FIRMWARE VM"
+        sudo virt-install --initrd-inject="$KS_FILE" \
+                          --extra-args="inst.ks=file:/ks.cfg console=ttyS0,115200" \
+                          --name="bootc-${TEST_OS}-${FIRMWARE}"\
+                          --disk path="$LIBVIRT_UEFI_IMAGE_PATH",format=qcow2 \
+                          --ram 3072 \
+                          --vcpus 2 \
+                          --network network=integration,mac=34:49:22:B0:83:30 \
+                          --boot "$BOOT_ARGS" \
+                          --os-variant "$OS_VARIANT" \
+                          --location "$LOCAL_BOOT_LOCATION" \
+                          --console pipe,source.path="$VIRT_LOG" \
+                          --nographics \
+                          --noautoconsole \
+                          --wait=-1 \
+                          --noreboot
+    fi
 fi
 
 # Start VM.
@@ -317,7 +336,7 @@ else
 fi
 sudo virsh vol-delete --pool images "bootc-${TEST_OS}-${FIRMWARE}.qcow2"
 
-if [[ "$ARCH" == "x86_64" ]] && [[ "$PARTITION" == "lvm" ]]; then
+if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]]; then
     sudo rm -rf "${HTTPD_PATH}/httpboot"
     sudo rm -f "${HTTPD_PATH}/ks.cfg"
 else
