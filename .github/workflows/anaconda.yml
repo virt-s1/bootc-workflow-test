@@ -1,0 +1,166 @@
+---
+name: Anaconda installation Test
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  pr-info:
+    if: ${{ github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query author repository permissions
+        uses: octokit/request-action@v2.x
+        id: user_permission
+        with:
+          route: GET /repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # restrict running of tests to users with admin or write permission for the repository
+      # see https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#get-repository-permissions-for-a-user
+      - name: Check if user does have correct permissions
+        if: contains('admin write', fromJson(steps.user_permission.outputs.data).permission)
+        id: check_user_perm
+        run: |
+          echo "User '${{ github.event.sender.login }}' has permission '${{ fromJson(steps.user_permission.outputs.data).permission }}' allowed values: 'admin', 'write'"
+          echo "allowed_user=true" >> $GITHUB_OUTPUT
+
+      - name: Get information for pull request
+        uses: octokit/request-action@v2.x
+        id: pr-api
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
+      sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
+      ref: ${{ fromJson(steps.pr-api.outputs.data).head.ref }}
+      repo_url: ${{ fromJson(steps.pr-api.outputs.data).head.repo.html_url }}
+
+  rhel94-anaconda:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-anaconda')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        partition: [standard, lvm]
+        include:
+          - firmware: bios
+          - firmware: uefi
+            arch: x86_64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: RHEL-9.4.0-Nightly
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
+          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }}"
+          variables: "TEST_OS=rhel-9-4;FIRMWARE=${{ matrix.firmware }};PART_LVM=${{ matrix.partition }}"
+
+  cs9-anaconda:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-anaconda')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        partition: [standard, lvm]
+        include:
+          - firmware: bios
+          - firmware: uefi
+            arch: x86_64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: CentOS-Stream-9
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-cs9-x86-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
+          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;FIRMWARE=${{ matrix.firmware }};PART_LVM=${{ matrix.partition }}"
+
+  cs9-dev-anaconda:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        partition: [standard, lvm]
+        include:
+          - firmware: bios
+          - firmware: uefi
+            arch: x86_64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: CentOS-Stream-9
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-cs9-dev-x86-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
+          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev;FIRMWARE=${{ matrix.firmware }};PART_LVM=${{ matrix.partition }}"
