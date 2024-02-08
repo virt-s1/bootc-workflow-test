@@ -4,6 +4,10 @@ cd ../../
 ARCH=$(uname -m)
 export ARCH
 
+TEMPDIR=$(mktemp -d)
+trap 'rm -rf -- "$TEMPDIR"' EXIT
+[[ -n "${GCP_SERVICE_ACCOUNT_FILE_B64+x}" ]] && echo "$GCP_SERVICE_ACCOUNT_FILE_B64" | base64 -d > "${TEMPDIR}"/gcp_auth.json && export GCP_SERVICE_ACCOUNT_FILE=${TEMPDIR}/gcp_auth.json
+
 function run_tests() {
 	if [ "$TEST_CASE" = "os-replace" ]; then
 		./os-replace.sh

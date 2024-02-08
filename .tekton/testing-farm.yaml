@@ -113,6 +113,9 @@ spec:
           fi
           COUNT=$(expr $COUNT + 1)
         done
+        [[ $- =~ x ]] && debug=1 && set +x
+        QUAY_SECRET=$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)
+        [[ $debug == 1 ]] && set -x
 
         if [[ ${COUNT} -ne 1 ]]; then
           echo "Error: multiple images in this application: ${IMAGES}"
@@ -129,6 +132,7 @@ spec:
           --environment CI="RHTAP" \
           --secret QUAY_USERNAME="${QUAY_USERNAME}" \
           --secret QUAY_PASSWORD="${QUAY_PASSWORD}" \
+          --secret QUAY_SECRET="${QUAY_SECRET}" \
           --secret GCP_SERVICE_ACCOUNT_FILE_B64="${GCP_SERVICE_ACCOUNT_FILE_B64}" \
           --secret AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
           --secret AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \

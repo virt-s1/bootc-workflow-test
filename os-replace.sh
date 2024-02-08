@@ -13,8 +13,6 @@ function redprint {
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
 
-[[ -n "${GCP_SERVICE_ACCOUNT_FILE_B64+x}" ]] && echo "$GCP_SERVICE_ACCOUNT_FILE_B64" | base64 -d > "${TEMPDIR}"/gcp_auth.json && export GCP_SERVICE_ACCOUNT_FILE=${TEMPDIR}/gcp_auth.json
-
 # SSH configurations
 SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
@@ -66,9 +64,7 @@ esac
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
-[[ $- =~ x ]] && debug=1 && set +x
-sed "s/REPLACE_ME/$(echo -n "${QUAY_USERNAME}:${QUAY_PASSWORD}" | base64 -w 0)/g" files/auth.template | tee auth.json > /dev/null
-[[ $debug == 1 ]] && set -x
+sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"
