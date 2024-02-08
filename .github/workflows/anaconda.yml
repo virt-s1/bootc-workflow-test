@@ -60,6 +60,9 @@ jobs:
         partition: [standard, lvm]
         include:
           - firmware: bios
+            arch: aarch64
+          - firmware: bios
+            arch: x86_64
           - firmware: uefi
             arch: x86_64
     runs-on: ubuntu-latest
@@ -84,7 +87,7 @@ jobs:
           pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
           tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }}"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }}"
           variables: "TEST_OS=rhel-9-4;FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   cs9-anaconda:
@@ -123,7 +126,7 @@ jobs:
           pull_request_status_name: "bootc-cs9-x86-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
           tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ QUAY_SECRET }}"
           variables: "TEST_OS=centos-stream-9;FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   cs9-dev-anaconda:
@@ -162,5 +165,5 @@ jobs:
           pull_request_status_name: "bootc-cs9-dev-x86-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
           tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }}"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ QUAY_SECRET }}"
           variables: "TEST_OS=centos-stream-9;IMAGE_NAME=centos-bootc-dev;FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
