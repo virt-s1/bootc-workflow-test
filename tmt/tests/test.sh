@@ -7,6 +7,8 @@ export ARCH
 function run_tests() {
 	if [ "$TEST_CASE" = "os-replace" ]; then
 		./os-replace.sh
+	elif [ "$TEST_CASE" = "anaconda" ]; then
+		./anaconda.sh
 	else
 		echo "Error: Test case $TEST_CASE not found!"
 		exit 1
