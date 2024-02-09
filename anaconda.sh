@@ -138,14 +138,25 @@ clearpart --all --initlabel --disklabel=gpt
 STOPHERE
 
 if [[ "$PARTITION" == "lvm" ]]; then
-    greenprint "LVM partition setup"
-    tee -a "$KS_FILE" > /dev/null << EOF
+    if [[ "$FIRMWARE" == "bios" ]]; then
+        greenprint "BIOS LVM partition setup"
+        tee -a "$KS_FILE" > /dev/null << EOF
 part biosboot --size=1 --fstype=biosboot
 part /boot --size=1000 --fstype=ext4 --label=boot
 part pv.01 --grow
 volgroup bootc pv.01
 logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
 EOF
+    else
+        greenprint "UEFI LVM partition setup"
+        tee -a "$KS_FILE" > /dev/null << EOF
+part /boot/efi --size=100  --fstype=efi
+part /boot     --size=1000  --fstype=ext4 --label=boot
+part pv.01 --grow
+volgroup bootc pv.01
+logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
+EOF
+    fi
 else
     greenprint "Standard partition setup"
     echo "autopart --nohome --noswap --type=plain --fstype=xfs" >> "$KS_FILE"
