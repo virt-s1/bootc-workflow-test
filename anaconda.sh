@@ -37,8 +37,11 @@ case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
         TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/g" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
+        CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
+        # The current image is built based on RHEL-9.4.0-20240130.10. It doesn't include patched anaconda. Let's use latest as workaround
+        # BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/"
         BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="rhel9-unknown"
         BOOT_ARGS="uefi"
@@ -48,8 +51,8 @@ case "$TEST_OS" in
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
         ADD_REPO=""
-        CURRENT_COMPOSE_CS9=$(curl -s "https://composes.stream.centos.org/production/" | grep -ioE ">CentOS-Stream-9-.*/<" | tr -d '>/<' | tail -1)
-        BOOT_LOCATION="https://composes.stream.centos.org/production/${CURRENT_COMPOSE_CS9}/compose/BaseOS/${ARCH}/os/"
+        CURRENT_COMPOSE_CS9=$(skopeo inspect "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
+        BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_CS9}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=6
