@@ -375,6 +375,12 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
 
+    # case: check reboot times
+    - name: check reboot times
+      command: last reboot
+      ignore_errors: true
+      become: true
+
     - assert:
         that:
           - failed_counter == "0"
