@@ -37,6 +37,21 @@ case "$TEST_OS" in
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
+        greenprint "Prepare cloud-init file"
+        tee -a "playbooks/user-data" > /dev/null << EOF
+#cloud-config
+yum_repos:
+  rhel-94-baseos:
+    name: rhel-94-baseos
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/
+    enabled: true
+    gpgcheck: false
+  rhel-94-appstream:
+    name: rhel-94-appstream
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/AppStream/${ARCH}/os/
+    enabled: true
+    gpgcheck: false
+EOF
         ;;
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
