@@ -58,6 +58,9 @@ jobs:
       matrix:
         arch: [x86_64]
         platform: [openstack, gcp, aws, libvirt]
+        include:
+          - arch: aarch64
+            platform: aws
     runs-on: ubuntu-latest
 
     steps:
@@ -81,7 +84,7 @@ jobs:
           tmt_plan_regex: "${{ matrix.platform }}"
           tf_scope: private
           secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }}"
-          variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }}"
+          variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }}"
 
   cs9-replace:
     needs: pr-info
@@ -93,6 +96,9 @@ jobs:
       matrix:
         arch: [x86_64]
         platform: [openstack, gcp, aws, libvirt]
+        include:
+          - arch: aarch64
+            platform: aws
     runs-on: ubuntu-latest
 
     steps:
@@ -116,7 +122,7 @@ jobs:
           tmt_plan_regex: "${{ matrix.platform }}"
           tf_scope: private
           secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }}"
+          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }}"
 
   cs9-dev-replace:
     needs: pr-info
@@ -128,6 +134,9 @@ jobs:
       matrix:
         arch: [x86_64]
         platform: [openstack, gcp, aws, libvirt]
+        include:
+          - arch: aarch64
+            platform: aws
     runs-on: ubuntu-latest
 
     steps:
@@ -151,4 +160,4 @@ jobs:
           tmt_plan_regex: "${{ matrix.platform }}"
           tf_scope: private
           secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};GCP_SERVICE_ACCOUNT_NAME=${{ secrets.GCP_SERVICE_ACCOUNT_NAME }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};IMAGE_NAME=centos-bootc-dev"
+          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev"

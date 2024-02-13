@@ -2,6 +2,8 @@
 - hosts: guest
   become: false
   vars:
+    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    platform: "{{ lookup('env', 'PLATFORM') | default('aws', true) }}"
     test_image_url: ""
 
   tasks:
@@ -24,12 +26,26 @@
       ignore_errors: true
 
     - name: Install podman and skopeo
-      package:
+      dnf:
         name:
           - podman
           - skopeo
         state: present
       become: true
+      when: ('rhel' not in test_os) or (platform != 'aws')
+
+    - name: Install podman and skopeo from internal
+      dnf:
+        disablerepo: "*"
+        enablerepo: "rhel-94-*"
+        name:
+          - podman
+          - skopeo
+        state: present
+      become: true
+      when:
+        - "'rhel' in test_os"
+        - platform == "aws"
 
     - name: Auth for RHEL private image
       command:
