@@ -4,7 +4,7 @@ name: Update CS9 AMI Image
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 3,7'
+    - cron: '30 0 * * 0,3'
 
 jobs:
   update_ami:
