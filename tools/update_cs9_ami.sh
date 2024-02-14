@@ -11,10 +11,10 @@ CURRENT_CS9_AARC64_AMI_ID=$(yq -r ".[0].vars.ami.aarch64.\"centos-stream-9\"" pl
 
 # Update CS9 x86_64 AMI ID
 if [[ "$LATEST_CS9_X86_64_AMI_ID" != "$CURRENT_CS9_X86_64_AMI_ID" ]]; then
-    yq -i ".[0].vars.ami.x86_64.\"centos-stream-9\" = \"$CURRENT_CS9_X86_64_AMI_ID\"" playbooks/deploy-aws.yaml
+    sed -i "s/centos-stream-9: ${CURRENT_CS9_X86_64_AMI_ID}/centos-stream-9: ${LATEST_CS9_X86_64_AMI_ID}/" playbooks/deploy-aws.yaml
 fi
 
 # Update CS9 aarch64 AMI ID
 if [[ "$LATEST_CS9_AARCH64_AMI_ID" != "$CURRENT_CS9_AARC64_AMI_ID" ]]; then
-    yq -i ".[0].vars.ami.aarch64.\"centos-stream-9\" = \"$CURRENT_CS9_AARC64_AMI_ID\"" playbooks/deploy-aws.yaml
+    sed -i "s/centos-stream-9: ${CURRENT_CS9_AARC64_AMI_ID}/centos-stream-9: ${LATEST_CS9_AARCH64_AMI_ID}/" playbooks/deploy-aws.yaml
 fi
