@@ -11,6 +11,9 @@ jobs:
     runs-on: container-runner
     container: quay.io/fedora/fedora:39
     steps:
+      - name: Install unzip and git
+        run: sudo dnf install -y unzip git
+
       - uses: actions/checkout@v4
 
       - name: Get current date
@@ -19,7 +22,6 @@ jobs:
 
       - name: Install aws cli
         run: |
-          sudo dnf install -y unzip git
           curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
               unzip awscliv2.zip && \
               ./aws/install && \
