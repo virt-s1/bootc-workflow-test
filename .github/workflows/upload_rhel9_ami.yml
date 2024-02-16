@@ -25,12 +25,25 @@ jobs:
               ./aws/install && \
               rm -rf aws awscliv2.zip
 
-      - name: Upload RHEL9 AMI Image
+      - name: Upload x86_64 RHEL9 AMI Image
         run: ./tools/upload_rhel9_ami.sh
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
+          TEST_OS: "rhel-9-4"
+          ARCH: "x86_64"
+
+      - name: Upload aarch64 RHEL9 AMI Image
+        run: ./tools/upload_rhel9_ami.sh
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DOWNLOAD_NODE: ${{ secrets.DOWNLOAD_NODE }}
+          TEST_OS: "rhel-9-4"
+          ARCH: "aarch64"
 
       - name: Create Pull Request
         id: cpr
