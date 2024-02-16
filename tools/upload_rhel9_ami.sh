@@ -126,7 +126,7 @@ sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_a
 USED_AMI=$(yq -r ".[0].vars.ami.${ARCH}.\"${TEST_OS}\"" playbooks/deploy-aws.yaml)
 
 # Update to use uploaded AMI
-yq -i ".[0].vars.ami.${ARCH}.${TEST_OS} = \"$AMI_ID\"" "playbooks/deploy-aws.yaml"
+sed -i "s/rhel-9-4: ${USED_AMI}/rhel-9-4: ${AMI_ID}/" playbooks/deploy-aws.yaml
 
 # List all uploaded AMIs
 UPLOADED_AMI_LIST=$(
