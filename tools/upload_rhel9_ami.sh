@@ -88,7 +88,7 @@ aws ec2 create-tags \
     --resources "$SNAPSHOT_ID" \
     --tags Key=Name,Value="bootc-${TEST_OS}-${ARCH}" Key=ImageName,Value="$IMAGE_FILENAME"
 
-REGISTERED_AMI_NAME="bootc-${TEST_OS}-${ARCH}"
+REGISTERED_AMI_NAME="bootc-${TEST_OS}-${ARCH}-$(date +'%y%m%d')"
 
 if [[ "$ARCH" == x86_64 ]]; then
     IMG_ARCH="$ARCH"
