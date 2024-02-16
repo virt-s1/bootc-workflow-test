@@ -13,7 +13,7 @@ IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compo
 IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">rhel-ec2-.*.${ARCH}.raw.xz<" | tr -d '><')
 curl -s -O --output-dir "$TEMPDIR" "${IMAGE_URL}/${IMAGE_FILE}"
 
-sudo dnf install -y xz curl wget
+sudo dnf install -y xz curl wget jq
 xz -d "${TEMPDIR}/${IMAGE_FILE}"
 
 IMAGE_FILENAME=${IMAGE_FILE%.*}
