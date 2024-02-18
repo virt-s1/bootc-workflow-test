@@ -1,0 +1,151 @@
+---
+name: bib image Test
+
+on:
+  issue_comment:
+    types:
+      - created
+
+jobs:
+  pr-info:
+    if: ${{ github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-bib-image') ||
+            endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-bib-image') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev-bib-image')) }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query author repository permissions
+        uses: octokit/request-action@v2.x
+        id: user_permission
+        with:
+          route: GET /repos/${{ github.repository }}/collaborators/${{ github.event.sender.login }}/permission
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # restrict running of tests to users with admin or write permission for the repository
+      # see https://docs.github.com/en/free-pro-team@latest/rest/reference/repos#get-repository-permissions-for-a-user
+      - name: Check if user does have correct permissions
+        if: contains('admin write', fromJson(steps.user_permission.outputs.data).permission)
+        id: check_user_perm
+        run: |
+          echo "User '${{ github.event.sender.login }}' has permission '${{ fromJson(steps.user_permission.outputs.data).permission }}' allowed values: 'admin', 'write'"
+          echo "allowed_user=true" >> $GITHUB_OUTPUT
+
+      - name: Get information for pull request
+        uses: octokit/request-action@v2.x
+        id: pr-api
+        with:
+          route: GET /repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    outputs:
+      allowed_user: ${{ steps.check_user_perm.outputs.allowed_user }}
+      sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
+      ref: ${{ fromJson(steps.pr-api.outputs.data).head.ref }}
+      repo_url: ${{ fromJson(steps.pr-api.outputs.data).head.repo.html_url }}
+
+  rhel94-bib-image:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            endsWith(github.event.comment.body, '/test-rhel94-bib-image')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        platform: [aws, libvirt]
+        include:
+          - platform: aws
+            image_type: ami
+          - platform: libvirt
+            image_type: qcow2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: RHEL-9.4.0-Nightly
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
+          tmt_plan_regex: "${{ matrix.platform }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
+          variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }}"
+
+  cs9-bib-image:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-cs9') ||
+            endsWith(github.event.comment.body, '/test-cs9-bib-image')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        platform: [aws, libvirt]
+        include:
+          - platform: aws
+            image_type: ami
+          - platform: libvirt
+            image_type: qcow2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: CentOS-Stream-9
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-replace-${{ matrix.platform }}"
+          tmt_plan_regex: "${{ matrix.platform }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
+          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }}"
+
+  cs9-dev-bib-image:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
+            endsWith(github.event.comment.body, '/test-cs9-dev-bib-image')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        platform: [aws, libvirt]
+        include:
+          - platform: aws
+            image_type: ami
+          - platform: libvirt
+            image_type: qcow2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: CentOS-Stream-9
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-replace-${{ matrix.platform }}"
+          tmt_plan_regex: "${{ matrix.platform }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
+          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }}"
