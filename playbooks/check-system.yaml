@@ -4,6 +4,7 @@
   vars:
     bootc_image: ""
     upgrade: ""
+    transient_root: "false"
     total_counter: "0"
     failed_counter: "0"
 
@@ -187,8 +188,9 @@
     - name: check /usr mount point
       command: findmnt -r -o SOURCE -n /usr
       register: result_usr_mount_point
+      when: transient_root == "false"
 
-    - name: /usr mount point checking on CentOS Stream
+    - name: /usr mount point checking
       block:
         - assert:
             that:
@@ -204,11 +206,13 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       vars:
         usr_mount_path: "{{ device_name }}[/ostree/deploy/{{ osname }}/deploy/{{ ostree_checksum }}.0/usr]"
+      when: transient_root == "false"
 
     # case: check /usr mount status
     - name: check /usr mount status
       shell: findmnt -r -o OPTIONS -n /usr | awk -F "," '{print $1}'
       register: result_usr_mount_status
+      when: transient_root == "false"
 
     - name: /usr should be mount with rw permission
       block:
@@ -224,6 +228,29 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: transient_root == "false"
+
+    # case: check / mount point
+    - name: check / mount point
+      command: findmnt -r -o SOURCE -n /
+      register: result_root_mount_point
+      when: transient_root == "true"
+
+    - name: / mount point checking
+      block:
+        - assert:
+            that:
+              - result_root_mount_point.stdout == "overlay"
+            fail_msg: "/ does not mount with overlay"
+            success_msg: "/ mounts with overlay"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: transient_root == "true"
 
     - name: check installed package
       shell: rpm -qa | sort
