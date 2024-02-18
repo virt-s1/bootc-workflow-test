@@ -10,10 +10,10 @@
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     ami:
       x86_64:
-        rhel-9-4: ami-0b6ff0c6ec4d4ea92
+        rhel-9-4: ami-0085279aa8a2170f6
         centos-stream-9: ami-087dde0e824141404
       aarch64:
-        rhel-9-4: ami-051f421aa977cb24d
+        rhel-9-4: ami-04b82edf7e63940ef
         centos-stream-9: ami-025af1eccc54ec6e6
     instance_type:
       x86_64:
