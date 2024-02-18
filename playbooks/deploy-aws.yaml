@@ -8,6 +8,7 @@
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
+    ami_id: ""
     ami:
       x86_64:
         rhel-9-4: ami-0085279aa8a2170f6
@@ -172,4 +173,12 @@
         section: cloud:vars
         option: instance_id
         value: "{{ instance_json.Instances[0].InstanceId }}"
+        no_extra_spaces: true
+
+    - name: write AWS ami id to inventory file
+      community.general.ini_file:
+        path: "{{ inventory_file }}"
+        section: cloud:vars
+        option: ami_id
+        value: "{{ ami_id }}"
         no_extra_spaces: true

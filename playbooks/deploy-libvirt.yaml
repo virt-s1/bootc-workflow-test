@@ -8,8 +8,9 @@
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
-    instance_name: bootc-{{ test_os }}
+    instance_name: "bootc-{{ test_os }}"
     image_path: "/var/lib/libvirt/images"
+    bib: "false"
 
   tasks:
     - set_fact:
@@ -23,7 +24,9 @@
 
         - set_fact:
             rhel_guest_image_fname: "{{ out.stdout }}"
-      when: "'centos' in test_os"
+      when:
+        - "'centos' in test_os"
+        - bib == "false"
 
     - name: Get rhel-guest-image filename
       block:
@@ -33,7 +36,9 @@
 
         - set_fact:
             rhel_guest_image_fname: "{{ out.stdout }}"
-      when: "'rhel' in test_os"
+      when:
+        - "'rhel' in test_os"
+        - bib == "false"
 
     - name: Download CentOS-Stream-GenericCloud image
       uri:
@@ -41,7 +46,9 @@
         dest: "{{ image_path }}"
         creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
-      when: "'centos' in test_os"
+      when:
+        - "'centos' in test_os"
+        - bib == "false"
 
     - name: Download rhel-guest-image
       uri:
@@ -49,7 +56,13 @@
         dest: "{{ image_path }}"
         creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
-      when: "'rhel' in test_os"
+      when:
+        - "'rhel' in test_os"
+        - bib == "false"
+
+    - set_fact:
+        rhel_guest_image_fname: "disk.qcow2"
+      when: bib == "true"
 
     - name: Read ssh_key_pub content
       command: cat "{{ ssh_key_pub }}"
@@ -70,6 +83,7 @@
 
     - name: Generate nocloud.iso
       command: "{{ playbook_dir }}/libvirt_nocloud.sh"
+      become: true
 
     - name: Define a VM
       community.libvirt.virt:
