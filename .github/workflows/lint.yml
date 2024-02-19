@@ -11,15 +11,15 @@ jobs:
     name: "📇 commitlint"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: wagoid/commitlint-github-action@v5
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: wagoid/commitlint-github-action@5ce82f5d814d4010519d15f0552aec4f17a1e1fe # v5
 
   spellcheck:
     name: "📋 spellcheck"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: codespell-project/actions-codespell@v1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: codespell-project/actions-codespell@94259cd8be02ad2903ba34a22d9c13de21a74461 # v2
         with:
           check_filenames: true
           ignore_words_list: bu
@@ -28,14 +28,14 @@ jobs:
     name: "🔭 Shellcheck"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: ludeeus/action-shellcheck@master
 
   yamllint:
     name: "🔬 yamlint"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: ibiqlik/action-yamllint@v3
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: ibiqlik/action-yamllint@2576378a8e339169678f9939646ee3ee325e845c # v3
         with:
           config_file: .yamllint.yml
