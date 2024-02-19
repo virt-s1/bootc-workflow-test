@@ -24,6 +24,7 @@ spec:
     - name: TESTING_FARM_API_URL
       default: https://api.dev.testing-farm.io/v0.1
       description: The testing-farm instance API to use
+    - name: CERT_URL
     - name: DOWNLOAD_NODE
     - name: RHEL_REGISTRY_URL
     - name: GCP_PROJECT
@@ -53,6 +54,8 @@ spec:
           value: $(params.TIMEOUT)
         - name: TESTING_FARM_API_URL
           value: $(params.TESTING_FARM_API_URL)
+        - name: CERT_URL
+          value: $(params.CERT_URL)
         - name: DOWNLOAD_NODE
           value: $(params.DOWNLOAD_NODE)
         - name: RHEL_REGISTRY_URL
@@ -125,6 +128,7 @@ spec:
         testing-farm request \
           --plan-filter "tag: stable" \
           --environment IMAGE_URL="${IMAGE_URL}" \
+          --environment CERT_URL="${CERT_URL}" \
           --environment DOWNLOAD_NODE="${DOWNLOAD_NODE}" \
           --environment RHEL_REGISTRY_URL="${RHEL_REGISTRY_URL}" \
           --environment GCP_PROJECT="${GCP_PROJECT}" \

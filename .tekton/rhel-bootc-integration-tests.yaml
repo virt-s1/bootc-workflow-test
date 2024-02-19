@@ -33,6 +33,7 @@ spec:
       default: https://api.dev.testing-farm.io/v0.1
       description: The testing-farm instance API to use
       type: string
+    - name: CERT_URL
     - name: DOWNLOAD_NODE
     - name: RHEL_REGISTRY_URL
     - name: GCP_PROJECT
@@ -63,6 +64,8 @@ spec:
           value: $(params.TIMEOUT)
         - name: TESTING_FARM_API_URL
           value: $(params.TESTING_FARM_API_URL)
+        - name: CERT_URL
+          value: $(params.CERT_URL)
         - name: DOWNLOAD_NODE
           value: $(params.DOWNLOAD_NODE)
         - name: RHEL_REGISTRY_URL
