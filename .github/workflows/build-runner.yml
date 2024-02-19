@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Get User Permission
         id: user_permission
-        uses: actions-cool/check-user-permission@v2
+        uses: actions-cool/check-user-permission@956b2e73cdfe3bcb819bb7225e490cb3b18fd76e # v2
         with:
           require: write
           username: ${{ github.triggering_actor }}
@@ -21,7 +21,7 @@ jobs:
 
       - name: checkout code
         if: steps.user_permission.outputs.require-result == 'true'
-        uses: actions/checkout@v3
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Build container
         if: steps.user_permission.outputs.require-result == 'true'

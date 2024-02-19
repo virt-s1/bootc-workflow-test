@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Git Repo Sync
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
         with:
           fetch-depth: 0
-      - uses: wangchucheng/git-repo-sync@v0.1.0
+      - uses: wangchucheng/git-repo-sync@63782025e80e84c48b25a1ee6bb9a22a3bd570d3 # v0.1.0
         with:
           target-url: ${{ secrets.TARGET_URL }}
           target-username: ${{ secrets.TARGET_USERNAME }}
