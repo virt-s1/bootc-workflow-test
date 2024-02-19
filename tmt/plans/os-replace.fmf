@@ -18,6 +18,8 @@ prepare:
       ansible-galaxy collection install openstack.cloud community.general community.libvirt amazon.aws ansible.posix
   - how: shell
     script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install
+  - how: shell
+    script: curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors && update-ca-trust
 execute:
   how: tmt
 

@@ -127,7 +127,7 @@ poweroff
 
 %pre
 #!/bin/sh
-curl -kLO ${CERT_URL}/certs/2022-IT-Root-CA.pem --output-dir /etc/pki/ca-trust/source/anchors
+curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors
 update-ca-trust
 cat > /etc/ostree/auth.json <<EOF
 {
@@ -268,6 +268,10 @@ else
                           --wait=-1 \
                           --noreboot
     fi
+fi
+
+if [[ -n $TESTING_FARM_REQUEST_ID ]]; then
+  cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../
 fi
 
 # Start VM.
