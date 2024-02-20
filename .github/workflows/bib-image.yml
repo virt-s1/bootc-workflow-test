@@ -57,17 +57,17 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        platform: [aws, libvirt]
+        image_type: [ami, qcow2]
         include:
-          - platform: aws
-            image_type: ami
-          - platform: libvirt
-            image_type: qcow2
+          - image_type: ami
+            platform: aws
+          - image_type: qcow2
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
@@ -97,17 +97,17 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        platform: [aws, libvirt]
+        image_type: [ami, qcow2]
         include:
-          - platform: aws
-            image_type: ami
-          - platform: libvirt
-            image_type: qcow2
+          - image_type: ami
+            platform: aws
+          - image_type: qcow2
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
@@ -137,17 +137,17 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        platform: [aws, libvirt]
+        image_type: [ami, qcow2]
         include:
-          - platform: aws
-            image_type: ami
-          - platform: libvirt
-            image_type: qcow2
+          - image_type: ami
+            platform: aws
+          - image_type: qcow2
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
       - name: Clone repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
         with:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
