@@ -8,6 +8,7 @@
 {% if arch == 'x86_64' %}
     <type arch='x86_64' machine='q35'>hvm</type>
 {% elif arch == 'aarch64' %}
+    <type arch='aarch64' machine='virt'>hvm</type>
     <loader readonly='yes' type='pflash'>/usr/share/AAVMF/AAVMF_CODE.fd</loader>
     <nvram template='/usr/share/AAVMF/AAVMF_VARS.fd'>/var/lib/libvirt/qemu/nvram/AAVMF_VARS.fd</nvram>
 {% elif arch == 'ppc64le' %}
