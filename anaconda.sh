@@ -270,9 +270,7 @@ else
     fi
 fi
 
-if [[ -n $TESTING_FARM_REQUEST_ID ]]; then
-  cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../
-fi
+[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../
 
 # Start VM.
 greenprint "Start VM"
