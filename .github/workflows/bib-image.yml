@@ -122,7 +122,7 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-replace-${{ matrix.platform }}"
+          pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
@@ -162,7 +162,7 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-replace-${{ matrix.platform }}"
+          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
