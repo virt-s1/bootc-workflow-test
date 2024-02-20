@@ -13,8 +13,8 @@ prepare:
       - unzip
   - how: shell
     script: |
-      pip install boto3 botocore
-      ansible-galaxy collection install community.general community.libvirt amazon.aws ansible.posix
+      pip install boto3 botocore openstacksdk
+      ansible-galaxy collection install openstack.cloud community.general community.libvirt amazon.aws ansible.posix
   - how: shell
     script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install
 execute:
