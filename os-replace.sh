@@ -137,9 +137,7 @@ export ANSIBLE_CONFIG="${PWD}/playbooks/ansible.cfg"
 greenprint "Deploy $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
-    -e ssh_user="$SSH_USER" \
     -e ssh_key_pub="$SSH_KEY_PUB" \
-    -e test_image_url="$TEST_IMAGE_URL" \
     -e inventory_file="$INVENTORY_FILE" \
     "playbooks/deploy-${PLATFORM}.yaml"
 
