@@ -77,7 +77,7 @@ jobs:
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
-          tmt_plan_regex: "${{ matrix.platform }}"
+          tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
           variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }}"
@@ -111,7 +111,7 @@ jobs:
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-replace-${{ matrix.platform }}"
-          tmt_plan_regex: "${{ matrix.platform }}"
+          tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
           variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }}"
@@ -145,7 +145,7 @@ jobs:
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-replace-${{ matrix.platform }}"
-          tmt_plan_regex: "${{ matrix.platform }}"
+          tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};AWS_REGION=${{ secrets.AWS_REGION }};CERT_URL=${{ secrets.CERT_URL }}"
           variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }}"

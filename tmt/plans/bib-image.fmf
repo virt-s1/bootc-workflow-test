@@ -1,6 +1,6 @@
 discover:
   how: fmf
-  test: os-replace
+  test: bib-image
 prepare:
   - how: install
     package:
@@ -13,53 +13,57 @@ prepare:
       - unzip
   - how: shell
     script: |
-      pip install boto3 botocore openstacksdk
-      ansible-galaxy collection install openstack.cloud community.general community.libvirt amazon.aws ansible.posix
+      pip install boto3 botocore
+      ansible-galaxy collection install community.general community.libvirt amazon.aws ansible.posix
   - how: shell
     script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && sudo ./aws/install
-  - how: shell
-    script: curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors && update-ca-trust
 execute:
   how: tmt
 
-/openstack:
-  summary: Run os-replace test on openstack
-  tag: openstack
-  environment+:
-    PLATFORM: openstack
-  adjust+:
-    - when: arch != x86_64
-      enabled: false
-
-/gcp:
-  summary: Run os-replace test on gcp
-  tag: gcp
-  environment+:
-    PLATFORM: gcp
-  prepare+:
-    - how: shell
-      script: cp tools/google-cloud-sdk.repo /etc/yum.repos.d/
-    - how: install
-      package:
-        - google-cloud-cli
-  adjust+:
-    - when: arch != x86_64 and arch != aarch64
-      enabled: false
-
-/aws:
-  summary: Run os-replace test on aws
+/ami:
+  summary: Use bib generate ami image and test on AWS
   tag: aws
   environment+:
     PLATFORM: aws
+    IMAGE_TYPE: ami
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
 
-/libvirt:
-  summary: Run os-replace test locally (nested)
-  tag: [libvirt, stable]
+/qcow2:
+  summary: Use bib generate qcow2 image and test locally (nested)
+  tag: libvirt
   environment+:
     PLATFORM: libvirt
+    IMAGE_TYPE: qcow2
+  prepare+:
+    - how: install
+      package:
+        - python3-libvirt
+        - python3-lxml
+        - qemu-kvm
+        - libvirt
+        - xorriso
+  adjust+:
+    - when: arch == ppc64le
+      enabled: false
+    - when: arch == x86_64
+      provision+:
+        hardware:
+          virtualization:
+            is-supported: true
+    - when: arch == aarch64
+      provision+:
+        hardware:
+          virtualization:
+            is-virtualized: false
+
+/iso:
+  summary: Use bib generate ISO image and test locally (nested)
+  tag: libvirt
+  environment+:
+    PLATFORM: libvirt
+    IMAGE_TYPE: iso
   prepare+:
     - how: install
       package:

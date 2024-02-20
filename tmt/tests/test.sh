@@ -13,13 +13,15 @@ function run_tests() {
 		./os-replace.sh
 	elif [ "$TEST_CASE" = "anaconda" ]; then
 		./anaconda.sh
+	elif [ "$TEST_CASE" = "bib-image" ]; then
+		./bib-image.sh
 	else
 		echo "Error: Test case $TEST_CASE not found!"
 		exit 1
 	fi
 }
 
-if [[ $CI == "RHTAP" ]]; then
+if [[ ${CI-x} == "RHTAP" ]]; then
 	podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 	skopeo inspect docker://"$IMAGE_URL" >skopeo_inspect.json
 	COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
