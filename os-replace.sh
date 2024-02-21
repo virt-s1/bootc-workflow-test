@@ -66,7 +66,7 @@ EOF
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
         # According to https://github.com/CentOS/centos-bootc-dev/pull/27
-        # transient root and compsefs are only landed on centos-bootc-dev and fedora-eln images
+        # transient root and composefs are only landed on centos-bootc-dev and fedora-eln images
         TRANSIENT_ROOT="false"
         if [[ "$IMAGE_NAME" == "centos-bootc-dev" ]]; then
             TRANSIENT_ROOT="true"
