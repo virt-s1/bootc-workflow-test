@@ -58,6 +58,7 @@ execute:
 
 /anaconda-bios-lvm:
   summary: Run anaconda test locally (nested)
+  tag: stable
   environment+:
     FIRMWARE: bios
     PARTITION: lvm
@@ -67,6 +68,7 @@ execute:
 
 /anaconda-bios-standard:
   summary: Run anaconda test locally (nested)
+  tag: stable
   environment+:
     FIRMWARE: bios
     PARTITION: standard
