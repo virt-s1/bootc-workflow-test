@@ -1,6 +1,7 @@
 #!/bin/bash
 set -exuo pipefail
 
+ARCH=$(uname -m)
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"

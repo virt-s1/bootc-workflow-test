@@ -37,6 +37,7 @@ case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
         TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         # CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
         # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
@@ -52,6 +53,7 @@ case "$TEST_OS" in
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         ADD_REPO=""
         CURRENT_COMPOSE_CS9=$(skopeo inspect "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
         BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_CS9}/compose/BaseOS/${ARCH}/os/"
@@ -68,6 +70,7 @@ case "$TEST_OS" in
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         ADD_REPO=""
         BOOT_LOCATION="https://odcs.fedoraproject.org/composes/production/latest-Fedora-ELN/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="fedora-rawhide"
