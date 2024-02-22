@@ -1,0 +1,265 @@
+---
+- hosts: openstack
+  gather_facts: false
+  become: false
+  vars:
+    ssh_key_pub: ""
+    inventory_file: ""
+
+  tasks:
+    - set_fact:
+        random_num: "{{ 9999 | random(start=1001) }}"
+    - set_fact:
+        instance_name: "bootc-build-openstack-f39-{{ random_num }}"
+
+    - name: create a new openstack keypair
+      openstack.cloud.keypair:
+        state: present
+        name: "kp-bootc-build-{{ random_num }}"
+        public_key_file: "{{ ssh_key_pub }}"
+
+    - name: create security group
+      openstack.cloud.security_group:
+        name: "sg-bootc-build-{{ random_num }}"
+        state: present
+        description: "security group for bootc test on"
+
+    - name: set ssh rule for security group
+      openstack.cloud.security_group_rule:
+        security_group: "sg-bootc-build-{{ random_num }}"
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+        remote_ip_prefix: 0.0.0.0/0
+
+    - name: Deploy openstack instance
+      openstack.cloud.server:
+        name: "{{ instance_name }}"
+        image: "Fedora-Cloud-Base-39-latest"
+        flavor: "ci.standard.large"
+        network: "shared_net_9"
+        key_name: "kp-bootc-build-{{ random_num }}"
+        security_groups: "sg-bootc-build-{{ random_num }}"
+        auto_ip: true
+        config_drive: true
+        wait: true
+        timeout: 600
+        userdata: |
+          #cloud-config
+          packages:
+            - python3
+            - python3-dnf
+
+    - name: Makre sure instance is running
+      openstack.cloud.server_info:
+        server: "{{ instance_name }}"
+      register: instance_status_result
+      retries: 20
+      until: instance_status_result.servers[0].vm_state == "active" and instance_status_result.servers[0].access_ipv4 != ""
+
+    - set_fact:
+        instance_ip: "{{ instance_status_result.servers[0].addresses.shared_net_9[0].addr }}"
+      when:
+        - instance_status_result is succeeded
+
+    - name: Waits until instance is reachable
+      wait_for:
+        host: "{{ instance_ip }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      retries: 30
+      register: result_ssh_check
+      until: result_ssh_check is success
+
+    - name: Add instance ip into host group guest
+      add_host:
+        name: "{{ instance_ip }}"
+        groups: builder
+
+    - name: Ensure cloud-init has finished
+      raw: test -f /var/lib/cloud/instance/boot-finished
+      retries: 30
+      delay: 20
+      register: cloud_init_check
+      changed_when: false
+      until: cloud_init_check is success
+      delegate_to: "{{ instance_ip }}"
+
+- hosts: builder
+  vars:
+    download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
+    rhel9_baseos: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/x86_64/os/"
+    rhel9_appstream: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/AppStream/x86_64/os/"
+    firmware: "{{ lookup('env', 'FIRMWARE') | default('bios', true) }}"
+
+  tasks:
+    - name: image building dependence
+      dnf:
+        name:
+          - curl
+          - expect
+          - sed
+          - tar
+          - qemu-kvm
+          - virt-install
+          - libvirt-daemon-kvm
+        state: latest
+      become: yes
+      register: dnf_result
+      until: dnf_result is success
+      retries: 5
+      delay: 60
+
+    - name: "generate kickstart file"
+      template:
+        src: "rhel-9-openstack-ks.j2"
+        dest: "/home/fedora/rhel-9-openstack.ks"
+
+    - name: generate virt-install-image shell script
+      template:
+        src: "virt-install-image.j2"
+        dest: "/home/fedora/virt-install-image"
+        mode: '0764'
+
+    - name: build qcow2 image first
+      command: "/home/fedora/virt-install-image /home/fedora/rhel-9-{{ firmware }}-lvm.qcow2 rhel-9-openstack.ks {{ rhel9_baseos }}"
+
+    - name: fetch image back
+      fetch:
+        src: "/home/fedora/rhel-9-{{ firmware }}-lvm.qcow2"
+        dest: "{{ playbook_dir }}/"
+        validate_checksum: yes
+        flat: yes
+
+- hosts: openstack
+  gather_facts: false
+  become: false
+  vars:
+    firmware: "{{ lookup('env', 'FIRMWARE') | default('bios', true) }}"
+
+  tasks:
+    - name: remove openstack instance
+      openstack.cloud.server:
+        name: "{{ instance_name }}"
+        state: absent
+
+    - name: upload tmp image to psi openstack
+      openstack.cloud.image:
+        name: "tmp-bootc-image-rhel-9-4-{{ firmware }}"
+        filename: "{{ playbook_dir }}/rhel-9-{{ firmware }}-lvm.qcow2"
+        # https://docs.openstack.org/glance/latest/admin/useful-image-properties.html
+        properties:
+          architecture: x86_64
+          os_distro: rhel
+          hw_rng_model: virtio
+
+    # image test
+    - block:
+        - name: deploy image test instance
+          openstack.cloud.server:
+            name: "bootc-image-test-rhel-9-4-{{ firmware }}"
+            image: "tmp-bootc-image-rhel-9-4-{{ firmware }}"
+            flavor: "ci.standard.large"
+            network: "shared_net_9"
+            key_name: "kp-bootc-build-{{ random_num }}"
+            security_groups: "sg-bootc-build-{{ random_num }}"
+            auto_ip: true
+            config_drive: true
+            wait: true
+            timeout: 600
+
+        - name: Makre sure instance is running
+          openstack.cloud.server_info:
+            server: "bootc-image-test-rhel-9-4-{{ firmware }}"
+          register: instance_status_result
+          retries: 20
+          until: instance_status_result.servers[0].vm_state == "active" and instance_status_result.servers[0].access_ipv4 != ""
+
+        - set_fact:
+            instance_ip: "{{ instance_status_result.servers[0].addresses.shared_net_9[0].addr }}"
+          when:
+            - instance_status_result is succeeded
+
+        - name: Waits until instance is reachable
+          wait_for:
+            host: "{{ instance_ip }}"
+            port: 22
+            search_regex: OpenSSH
+            delay: 10
+          retries: 30
+          register: result_ssh_check
+          until: result_ssh_check is success
+
+        - name: add os instance ip into host group builder
+          add_host:
+            name: "{{ instance_ip }}"
+            groups: guest
+
+        - name: Ensure cloud-init has finished
+          raw: test -f /var/lib/cloud/instance/boot-finished
+          retries: 30
+          delay: 20
+          register: cloud_init_check
+          changed_when: false
+          until: cloud_init_check is success
+          delegate_to: "{{ instance_ip }}"
+
+        # https://cloudinit.readthedocs.io/en/latest/topics/modules.html#growpart
+        # 10G image will be resized to 40G (disk size)
+        - name: disk growpart feature checking
+          command: df -h
+          become: yes
+          register: result_growpart
+          delegate_to: "{{ instance_ip }}"
+
+        - name: LVM checking
+          fail:
+            msg: "No LVM support"
+          when: "'/dev/mapper/bootc-root' not in result_growpart.stdout"
+
+      rescue:
+        - name: remove tmp image
+          openstack.cloud.image:
+            name: "tmp-bootc-image-rhel-9-4-{{ firmware }}"
+            state: absent
+
+        - name: "building openstack image fail"
+          fail:
+            msg: "building openstack image fail"
+
+      always:
+        - name: remove image test instance
+          openstack.cloud.server:
+            name: "bootc-image-test-rhel-9-4-{{ firmware }}"
+            state: absent
+
+        - name: delete tested tmp image
+          openstack.cloud.image:
+            name: "tmp-bootc-image-rhel-9-4-{{ firmware }}"
+            state: absent
+
+    - name: "delete last openstack image"
+      openstack.cloud.image:
+        name: "bootc-rhel-9-4-lvm-{{ firmware }}"
+        state: absent
+
+    - name: "upload new openstack image"
+      openstack.cloud.image:
+        name: "bootc-rhel-9-4-lvm-{{ firmware }}"
+        filename: "{{ playbook_dir }}/rhel-9-openstack.qcow2"
+        # https://docs.openstack.org/glance/latest/admin/useful-image-properties.html
+        properties:
+          architecture: x86_64
+          os_distro: rhel
+          hw_rng_model: virtio
+
+    - name: "delete security group"
+      openstack.cloud.security_group:
+        state: absent
+        name: "sg-bootc-build-{{ random_num }}"
+
+    - name: "delete key pair"
+      openstack.cloud.keypair:
+        state: absent
+        name: "kp-bootc-build-{{ random_num }}"
