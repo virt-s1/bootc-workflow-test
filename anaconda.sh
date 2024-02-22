@@ -183,7 +183,7 @@ touch "$VIRT_LOG"
 sudo chown qemu:qemu "$VIRT_LOG"
 
 # HTTP Boot only runs on x86_64 + LVM
-if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]] && [[ "$TEST_OS" == "rhel-9-4" ]]; then
+if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]]; then
     greenprint "📥 Install httpd and configure HTTP boot server"
     sudo dnf install -y httpd
     sudo systemctl enable --now httpd.service
@@ -365,7 +365,7 @@ else
 fi
 sudo virsh vol-delete --pool images "bootc-${TEST_OS}-${FIRMWARE}.qcow2"
 
-if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]] && [[ "$TEST_OS" == "rhel-9-4" ]]; then
+if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]]; then
     sudo rm -rf "${HTTPD_PATH}/httpboot"
     sudo rm -f "${HTTPD_PATH}/ks.cfg"
 else
