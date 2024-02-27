@@ -34,13 +34,12 @@
       become: true
       when: ('rhel' not in test_os) or (platform != 'aws')
 
-    - name: Install podman and skopeo from internal
+    - name: Install podman from internal
       dnf:
         disablerepo: "*"
         enablerepo: "rhel-94-*"
         name:
           - podman
-          - skopeo
         state: present
       become: true
       when:
@@ -62,6 +61,7 @@
          --privileged \
          --pid=host \
          -v /:/target \
+         -v /var/lib/containers:/var/lib/containers \
          --security-opt label=type:unconfined_t \
          {{ test_image_url }} \
          bootc install to-filesystem --replace=alongside /target"
