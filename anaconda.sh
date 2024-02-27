@@ -123,6 +123,8 @@ rootpw --lock --iscrypted locked
 user --name=${SSH_USER} --groups=wheel --iscrypted
 sshkey --username=${SSH_USER} "$SSH_KEY_PUB_CONTENT"
 
+bootloader --append="console=ttyS0,115200n8"
+
 ostreecontainer --url $TEST_IMAGE_URL --no-signature-verification
 
 poweroff
