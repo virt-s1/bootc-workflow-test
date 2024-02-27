@@ -382,6 +382,7 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
 
     # case: check persistent log in system
+    # Skipped for RHEL test due to bug https://github.com/CentOS/centos-bootc/issues/354
     - name: check journald persistent logging
       block:
         - name: list boots
@@ -401,6 +402,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: ansible_facts['distribution'] != 'RedHat'
 
     # case: check reboot times
     - name: check reboot times
