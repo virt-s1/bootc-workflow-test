@@ -1,8 +1,6 @@
 #!/bin/bash
 
 cd ../../
-ARCH=$(uname -m)
-export ARCH
 
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT

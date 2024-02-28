@@ -2,6 +2,7 @@
 set -exuo pipefail
 
 ARCH=$(uname -m)
+
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -105,7 +106,6 @@ case "$ARCH" in
         exit 1
         ;;
 esac
-
 
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
 greenprint "Create $TEST_OS installation Containerfile"
