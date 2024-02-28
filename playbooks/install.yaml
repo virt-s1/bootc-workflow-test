@@ -25,11 +25,10 @@
       command: findmnt
       ignore_errors: true
 
-    - name: Install podman and skopeo
+    - name: Install podman
       dnf:
         name:
           - podman
-          - skopeo
         state: present
       become: true
       when: ('rhel' not in test_os) or (platform != 'aws')
