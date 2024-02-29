@@ -54,10 +54,6 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
-  prepare+:
-    - how: install
-      package:
-        - qemu-user-static
 
 /libvirt:
   summary: Run os-replace test locally (nested)
