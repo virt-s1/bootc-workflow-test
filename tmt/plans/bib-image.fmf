@@ -49,16 +49,11 @@ execute:
   adjust+:
     - when: arch == ppc64le
       enabled: false
-    - when: arch == x86_64
+    - when: arch == x86_64 or arch == aarch64
       provision+:
         hardware:
           virtualization:
             is-supported: true
-    - when: arch == aarch64
-      provision+:
-        hardware:
-          virtualization:
-            is-virtualized: false
 
 /iso:
   summary: Use bib generate ISO image and test locally (nested)
@@ -77,13 +72,8 @@ execute:
   adjust+:
     - when: arch == ppc64le
       enabled: false
-    - when: arch == x86_64
+    - when: arch == x86_64 or arch == aarch64
       provision+:
         hardware:
           virtualization:
             is-supported: true
-    - when: arch == aarch64
-      provision+:
-        hardware:
-          virtualization:
-            is-virtualized: false
