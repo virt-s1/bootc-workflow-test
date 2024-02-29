@@ -116,7 +116,7 @@ jobs:
         uses: sclorg/testing-farm-as-github-action@v1
         with:
           compose: CentOS-Stream-9
-          api_key: ${{ secrets.TF_API_KEY }}
+          api_key: ${{ secrets.PUBLIC_TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
@@ -156,7 +156,7 @@ jobs:
         uses: sclorg/testing-farm-as-github-action@v1
         with:
           compose: CentOS-Stream-9
-          api_key: ${{ secrets.TF_API_KEY }}
+          api_key: ${{ secrets.PUBLIC_TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
