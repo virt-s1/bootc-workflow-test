@@ -11,10 +11,10 @@
     ami_id: ""
     ami:
       x86_64:
-        rhel-9-4: ami-0085279aa8a2170f6
+        rhel-9-4: ami-0ca0ff1ebb4409780
         centos-stream-9: ami-087dde0e824141404
       aarch64:
-        rhel-9-4: ami-04b82edf7e63940ef
+        rhel-9-4: ami-0db44ed6cb4a27c60
         centos-stream-9: ami-025af1eccc54ec6e6
     instance_type:
       x86_64:
