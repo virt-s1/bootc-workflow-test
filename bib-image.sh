@@ -107,7 +107,10 @@ case "$ARCH" in
         ;;
 esac
 
+
+[[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
+[[ $debug == 1 ]] && set -x
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"

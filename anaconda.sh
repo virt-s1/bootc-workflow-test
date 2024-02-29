@@ -37,6 +37,7 @@ case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
         TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
+        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
@@ -87,7 +88,9 @@ TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Generate auth.json for registry auth"
+[[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/$QUAY_SECRET/g" files/auth.template | tee auth.json > /dev/null
+[[ $debug == 1 ]] && set -x
 
 greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
