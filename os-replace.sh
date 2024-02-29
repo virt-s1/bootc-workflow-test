@@ -86,20 +86,6 @@ EOF
         ;;
 esac
 
-greenprint "Configure container build arch"
-case "$ARCH" in
-    "x86_64")
-        BUILD_PLATFORM="linux/amd64"
-        ;;
-    "aarch64")
-        BUILD_PLATFORM="linux/arm64"
-        ;;
-    *)
-        redprint "Variable ARCH has to be defined"
-        exit 1
-        ;;
-esac
-
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
@@ -123,7 +109,7 @@ greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 greenprint "Build $TEST_OS installation container image"
-podman build --platform "$BUILD_PLATFORM" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
+podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
 greenprint "Push $TEST_OS installation container image"
 podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
@@ -178,7 +164,7 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --platform "$BUILD_PLATFORM" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
 podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
