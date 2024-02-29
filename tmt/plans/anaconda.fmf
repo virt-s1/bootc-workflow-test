@@ -2,7 +2,7 @@ discover:
   how: fmf
   test: anaconda
 adjust+:
-  - when: arch == x86_64
+  - when: arch == x86_64 or arch == aarch64
     provision:
       hardware:
         cpu:
@@ -10,14 +10,6 @@ adjust+:
         memory: ">= 6 GB"
         virtualization:
           is-supported: true
-  - when: arch == aarch64
-    provision:
-      hardware:
-        cpu:
-          processors: ">= 2"
-        memory: ">= 6 GB"
-        virtualization:
-          is-virtualized: false
 prepare:
   - how: install
     package:
