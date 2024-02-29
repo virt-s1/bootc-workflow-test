@@ -4,7 +4,9 @@ cd ../../
 
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
+[[ $- =~ x ]] && debug=1 && set +x
 [[ -n "${GCP_SERVICE_ACCOUNT_FILE_B64+x}" ]] && echo "$GCP_SERVICE_ACCOUNT_FILE_B64" | base64 -d > "${TEMPDIR}"/gcp_auth.json && export GCP_SERVICE_ACCOUNT_FILE=${TEMPDIR}/gcp_auth.json
+[[ $debug == 1 ]] && set -x
 
 function run_tests() {
 	if [ "$TEST_CASE" = "os-replace" ]; then
