@@ -46,12 +46,12 @@ case "$TEST_OS" in
 yum_repos:
   rhel-94-baseos:
     name: rhel-94-baseos
-    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/\$basearch/os/
     enabled: true
     gpgcheck: false
   rhel-94-appstream:
     name: rhel-94-appstream
-    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/AppStream/${ARCH}/os/
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/AppStream/\$basearch/os/
     enabled: true
     gpgcheck: false
 EOF
