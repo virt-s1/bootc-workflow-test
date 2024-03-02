@@ -60,12 +60,7 @@ case "$TEST_OS" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=6
-        # According to https://github.com/CentOS/centos-bootc-dev/pull/27
-        # transient root and composefs are only landed on centos-bootc-dev and fedora-eln images
-        TRANSIENT_ROOT="false"
-        if [[ "$IMAGE_NAME" == "centos-bootc-dev" ]]; then
-            TRANSIENT_ROOT="true"
-        fi
+        TRANSIENT_ROOT="true"
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
