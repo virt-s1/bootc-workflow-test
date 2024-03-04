@@ -48,7 +48,6 @@ case "$TEST_OS" in
         OS_VARIANT="rhel9-unknown"
         BOOT_ARGS="uefi"
         CUT_DIRS=8
-        TRANSIENT_ROOT="false"
         ;;
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
@@ -60,7 +59,6 @@ case "$TEST_OS" in
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=6
-        TRANSIENT_ROOT="true"
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
@@ -71,7 +69,6 @@ case "$TEST_OS" in
         OS_VARIANT="fedora-rawhide"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=7
-        TRANSIENT_ROOT="true"
         ;;
     *)
         redprint "Variable TEST_OS has to be defined"
@@ -326,7 +323,6 @@ greenprint "Run ostree checking test"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e transient_root="$TRANSIENT_ROOT" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -350,7 +346,6 @@ greenprint "Run ostree checking test after upgrade"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e transient_root="$TRANSIENT_ROOT" \
     -e upgrade="true" \
     playbooks/check-system.yaml
 
