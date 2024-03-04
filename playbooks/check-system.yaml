@@ -402,7 +402,6 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
-      when: ansible_facts['distribution'] != 'RedHat'
 
     # case: check reboot times
     - name: check reboot times
