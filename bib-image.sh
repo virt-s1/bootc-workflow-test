@@ -55,7 +55,6 @@ yum_repos:
     enabled: true
     gpgcheck: false
 EOF
-        TRANSIENT_ROOT="false"
         ;;
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
@@ -67,7 +66,6 @@ EOF
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
-        TRANSIENT_ROOT="true"
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
@@ -75,7 +73,6 @@ EOF
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="fedora"
         ADD_REPO=""
-        TRANSIENT_ROOT="true"
         ;;
     *)
         redprint "Variable TEST_OS has to be defined"
@@ -222,7 +219,6 @@ greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e transient_root="$TRANSIENT_ROOT" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -246,7 +242,6 @@ greenprint "Run ostree checking test after upgrade on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e transient_root="$TRANSIENT_ROOT" \
     -e upgrade="true" \
     playbooks/check-system.yaml
 
