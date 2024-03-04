@@ -9,7 +9,7 @@ on:
 jobs:
   update_ami:
     runs-on: container-runner
-    container: quay.io/fedora/fedora:39
+    container: quay.io/fedora/fedora:41@sha256:7553d963285e44a011c9464aa773ff4de9f2bec7325007d77c39e2d1cc90e8e1
     steps:
       - name: Install unzip and git
         run: sudo dnf install -y unzip git gh
