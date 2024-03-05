@@ -80,6 +80,7 @@ EOF
         ;;
 esac
 
+VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
 TEST_IMAGE_NAME="${IMAGE_NAME}-test"
 # bootc-image-builder does not support private image repo,
 # use temporary public image repo as workaround
@@ -219,6 +220,7 @@ greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
+    -e image_label_version_id="$VERSION_ID" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -242,8 +244,14 @@ greenprint "Run ostree checking test after upgrade on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
+    -e image_label_version_id="$VERSION_ID" \
     -e upgrade="true" \
     playbooks/check-system.yaml
+
+greenprint "Rollback $TEST_OS system"
+ansible-playbook -v \
+    -i "$INVENTORY_FILE" \
+    playbooks/rollback.yaml
 
 greenprint "Terminate $PLATFORM instance and deregister AMI"
 ansible-playbook -v \

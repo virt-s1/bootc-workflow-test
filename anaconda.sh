@@ -76,6 +76,7 @@ case "$TEST_OS" in
         ;;
 esac
 
+VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
@@ -323,6 +324,7 @@ greenprint "Run ostree checking test"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
+    -e image_label_version_id="$VERSION_ID" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -346,8 +348,14 @@ greenprint "Run ostree checking test after upgrade"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
+    -e image_label_version_id="$VERSION_ID" \
     -e upgrade="true" \
     playbooks/check-system.yaml
+
+greenprint "Rollback $TEST_OS system"
+ansible-playbook -v \
+    -i "$INVENTORY_FILE" \
+    playbooks/rollback.yaml
 
 greenprint "Clean up"
 rm -rf auth.json rhel-9-4.repo
