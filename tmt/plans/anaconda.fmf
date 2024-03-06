@@ -24,7 +24,7 @@ prepare:
       - xorriso
   - how: shell
     script: |
-      ansible-galaxy collection install community.general
+      ansible-galaxy collection install community.general ansible.posix
   - how: shell
     script: curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors && update-ca-trust
 execute:
