@@ -270,7 +270,7 @@ else
     fi
 fi
 
-[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../
+[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../installation-"$VIRT_LOG"
 
 # Start VM.
 greenprint "Start VM"
@@ -303,7 +303,7 @@ for _ in $(seq 0 30); do
     sleep 10
 done
 
-[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp -f "$VIRT_LOG" "${TMT_TEST_DATA}"/../
+[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp -f "$VIRT_LOG" "${TMT_TEST_DATA}"/../bootup-"$VIRT_LOG"
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -358,8 +358,6 @@ greenprint "Rollback $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     playbooks/rollback.yaml
-
-[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp -f "$VIRT_LOG" "${TMT_TEST_DATA}"/../
 
 greenprint "Clean up"
 rm -rf auth.json rhel-9-4.repo
