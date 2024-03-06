@@ -272,6 +272,8 @@ fi
 
 [[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../installation-"$VIRT_LOG"
 
+sudo virsh dumpxml "bootc-${TEST_OS}-${FIRMWARE}"
+
 # Start VM.
 greenprint "Start VM"
 sudo virsh start "bootc-${TEST_OS}-${FIRMWARE}"
@@ -358,6 +360,8 @@ greenprint "Rollback $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     playbooks/rollback.yaml
+
+[[ -z ${TESTING_FARM_REQUEST_ID+x} ]] || cp "$VIRT_LOG" "${TMT_TEST_DATA}"/../final-"$VIRT_LOG"
 
 greenprint "Clean up"
 rm -rf auth.json rhel-9-4.repo
