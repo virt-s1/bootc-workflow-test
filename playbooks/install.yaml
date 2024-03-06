@@ -51,6 +51,7 @@
         -u "{{ lookup('env', 'QUAY_USERNAME') }}" \
         -p "{{ lookup('env', 'QUAY_PASSWORD') }}" \
         quay.io
+      no_log: true
       become: true
 
     - name: Install image
