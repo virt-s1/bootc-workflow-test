@@ -100,6 +100,14 @@ cat "$INSTALL_CONTAINERFILE"
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
+n=0
+until [ "$n" -ge 3 ]
+do
+   podman pull "$TIER1_IMAGE_URL" && break
+   n=$((n+1))
+   sleep 10
+done
+
 greenprint "Build $TEST_OS installation container image"
 podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
