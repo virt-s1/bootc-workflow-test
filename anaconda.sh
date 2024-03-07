@@ -223,7 +223,7 @@ EOF
                       --boot "$BOOT_ARGS" \
                       --pxe \
                       --os-variant "$OS_VARIANT" \
-                      --console pipe,source.path="$VIRT_LOG" \
+                      --console file,source.path="$VIRT_LOG" \
                       --nographics \
                       --noautoconsole \
                       --wait=-1 \
@@ -245,7 +245,7 @@ else
                           --network network=integration,mac=34:49:22:B0:83:30 \
                           --os-variant "$OS_VARIANT" \
                           --location "$LOCAL_BOOT_LOCATION" \
-                          --console pipe,source.path="$VIRT_LOG" \
+                          --console file,source.path="$VIRT_LOG" \
                           --nographics \
                           --noautoconsole \
                           --wait=-1 \
@@ -262,7 +262,7 @@ else
                           --boot "$BOOT_ARGS" \
                           --os-variant "$OS_VARIANT" \
                           --location "$LOCAL_BOOT_LOCATION" \
-                          --console pipe,source.path="$VIRT_LOG" \
+                          --console file,source.path="$VIRT_LOG" \
                           --nographics \
                           --noautoconsole \
                           --wait=-1 \
