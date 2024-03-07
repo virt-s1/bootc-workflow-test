@@ -177,8 +177,6 @@ fi
 greenprint "Configure console log file"
 VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-${PARTITION}-console.log"
 sudo rm -f "$VIRT_LOG"
-touch "$VIRT_LOG"
-sudo chown qemu:qemu "$VIRT_LOG"
 
 # HTTP Boot only runs on x86_64 + LVM
 if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" == "lvm" ]]; then
