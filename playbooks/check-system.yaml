@@ -365,6 +365,11 @@
       register: result_dmesg_error
       become: true
 
+    - name: check journal error and fail log
+      shell: journalctl | grep -i "error\|fail" | grep -v "skipped" | grep -v "failover" | grep -v "ignition" | grep -v "Driver 'pcspkr'" || true
+      register: result_journalctl_error
+      become: true
+
     # case: check running container with podman in root
     - name: run CentOS Stream 9 image with podman in root
       command: podman run --rm quay.io/centos/centos:stream9 cat /etc/redhat-release
