@@ -78,6 +78,18 @@ EOF
         ;;
 esac
 
+if [[ ${AIR_GAPPED-} -eq 1 ]];then
+    if [[ ${PLATFORM} == "libvirt" ]]; then
+        AIR_GAPPED_DIR="$TEMPDIR"/virtiofs
+        mkdir "$AIR_GAPPED_DIR"
+    else
+        AIR_GAPPED=0
+    fi
+else
+    AIR_GAPPED=0
+    AIR_GAPPED_DIR=""
+fi
+
 VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
@@ -113,7 +125,13 @@ greenprint "Build $TEST_OS installation container image"
 podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
 greenprint "Push $TEST_OS installation container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+n=0
+until [ "$n" -ge 3 ]
+do
+   podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL" && break
+   n=$((n+1))
+   sleep 10
+done
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -142,6 +160,7 @@ ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e ssh_key_pub="$SSH_KEY_PUB" \
     -e inventory_file="$INVENTORY_FILE" \
+    -e air_gapped_dir="$AIR_GAPPED_DIR" \
     "playbooks/deploy-${PLATFORM}.yaml"
 
 greenprint "Install $TEST_OS bootc system"
@@ -169,15 +188,23 @@ podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE
 greenprint "Push $TEST_OS upgrade container image"
 podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
+if [[ ${AIR_GAPPED-} -eq 1 ]]; then
+    skopeo copy docker://"$TEST_IMAGE_URL" dir://"$AIR_GAPPED_DIR"
+    BOOTC_IMAGE="/mnt"
+else
+    BOOTC_IMAGE="$TEST_IMAGE_URL"
+fi
+
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e air_gapped_dir="$AIR_GAPPED_DIR" \
     playbooks/upgrade.yaml
 
 greenprint "Run ostree checking test after upgrade on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
-    -e bootc_image="$TEST_IMAGE_URL" \
+    -e bootc_image="$BOOTC_IMAGE" \
     -e image_label_version_id="$VERSION_ID" \
     -e upgrade="true" \
     playbooks/check-system.yaml
@@ -185,6 +212,7 @@ ansible-playbook -v \
 greenprint "Rollback $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e air_gapped_dir="$AIR_GAPPED_DIR" \
     playbooks/rollback.yaml
 
 greenprint "Remove $PLATFORM instance"

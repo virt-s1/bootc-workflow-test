@@ -60,6 +60,7 @@ execute:
   tag: [libvirt, stable]
   environment+:
     PLATFORM: libvirt
+    AIR_GAPPED: 1
   prepare+:
     - how: install
       package:

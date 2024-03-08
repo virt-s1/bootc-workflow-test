@@ -25,6 +25,12 @@
 {% elif arch == 'aarch64' %}
   <cpu mode='host-passthrough'/>
 {% endif %}
+{% if air_gapped_dir != '' %}
+  <memoryBacking>
+    <source type='memfd'/>
+    <access mode='shared'/>
+  </memoryBacking>
+{% endif %}
   <devices>
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type='file' device='disk'>
@@ -43,5 +49,12 @@
       <model type='virtio'/>
     </interface>
     <console type='pty'/>
+{% if air_gapped_dir != '' %}
+    <filesystem type='mount' accessmode='passthrough'>
+      <driver type='virtiofs' queue='1024'/>
+      <source dir='{{ air_gapped_dir }}'/>
+      <target dir='mount_tag'/>
+    </filesystem>
+{% endif %}
   </devices>
 </domain>
