@@ -91,6 +91,12 @@
         xml: "{{ lookup('template', 'libvirt_vm_template.xml.j2') }}"
       become: true
 
+    - name: Get VM xml
+      community.libvirt.virt:
+        command: get_xml
+        name: "{{ instance_name }}"
+      become: true
+
     - name: Start a VM
       community.libvirt.virt:
         name: "{{ instance_name }}"
