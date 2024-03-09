@@ -10,6 +10,16 @@ function redprint {
     echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
 }
 
+function retry {
+    n=0
+    until [ "$n" -ge 3 ]
+    do
+       "$@" && break
+       n=$((n+1))
+       sleep 10
+    done
+}
+
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
 
@@ -18,7 +28,10 @@ SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 SSH_KEY_PUB="${SSH_KEY}.pub"
 
-INSTALL_CONTAINERFILE=${TEMPDIR}/Containerfile.install
+git submodule update
+LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
+LAYERED_DIR="examples/$LAYERED_IMAGE"
+INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
 UPGRADE_CONTAINERFILE=${TEMPDIR}/Containerfile.upgrade
 QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')}"
 INVENTORY_FILE="${TEMPDIR}/inventory"
@@ -31,7 +44,7 @@ case "$TEST_OS" in
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="cloud-user"
         CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee "${LAYERED_DIR}"/rhel-9-4.repo > /dev/null
         # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
         if [[ "$PLATFORM" == "aws" ]]; then
@@ -95,15 +108,22 @@ TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 [[ $- =~ x ]] && debug=1 && set +x
-sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
+sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/auth.json > /dev/null
 [[ $debug == 1 ]] && set -x
 greenprint "Create $TEST_OS installation Containerfile"
-tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
-FROM "$TIER1_IMAGE_URL"
-$ADD_REPO
-RUN dnf -y install python3 cloud-init && \
-    dnf -y clean all
+sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO|" "$INSTALL_CONTAINERFILE"
+ROOT_SSH_KEY=""
+if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]]; then
+   SSH_USER="root"
+   SSH_KEY_PUB_CONTENT=$(cat "${SSH_KEY_PUB}")
+   ROOT_SSH_KEY="RUN mkdir -p /usr/etc-system/ && echo 'AuthorizedKeysFile /usr/etc-system/%u.keys' >> /etc/ssh/sshd_config.d/30-auth-system.conf && \
+       echo \"$SSH_KEY_PUB_CONTENT\" > /usr/etc-system/root.keys && chmod 0600 /usr/etc-system/root.keys"
+   REPLACE_CLOUD_USER=""
+fi
+tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
+RUN dnf -y clean all
 COPY auth.json /etc/ostree/auth.json
+$ROOT_SSH_KEY
 $REPLACE_CLOUD_USER
 EOF
 
@@ -113,25 +133,13 @@ cat "$INSTALL_CONTAINERFILE"
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
-n=0
-until [ "$n" -ge 3 ]
-do
-   podman pull "$TIER1_IMAGE_URL" && break
-   n=$((n+1))
-   sleep 10
-done
+retry podman pull "$TIER1_IMAGE_URL"
 
 greenprint "Build $TEST_OS installation container image"
-podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
+retry podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 
 greenprint "Push $TEST_OS installation container image"
-n=0
-until [ "$n" -ge 3 ]
-do
-   podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL" && break
-   n=$((n+1))
-   sleep 10
-done
+retry podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -169,10 +177,14 @@ ansible-playbook -v \
     -e test_image_url="$TEST_IMAGE_URL" \
     playbooks/install.yaml
 
+if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" == "qemu-guest-agent" ]]; then
+    virsh guestinfo bootc-"$TEST_OS"
+fi
 greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e bootc_image="$TEST_IMAGE_URL" \
+    -e layered_image="$LAYERED_IMAGE" \
     -e image_label_version_id="$VERSION_ID" \
     playbooks/check-system.yaml
 
@@ -184,12 +196,12 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+retry podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+retry podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 if [[ ${AIR_GAPPED-} -eq 1 ]]; then
-    skopeo copy docker://"$TEST_IMAGE_URL" dir://"$AIR_GAPPED_DIR"
+    retry skopeo copy docker://"$TEST_IMAGE_URL" dir://"$AIR_GAPPED_DIR"
     BOOTC_IMAGE="/mnt"
 else
     BOOTC_IMAGE="$TEST_IMAGE_URL"
