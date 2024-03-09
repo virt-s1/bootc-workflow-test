@@ -21,13 +21,13 @@
           command: bootc switch --transport dir /mnt
           become: true
       when:
-        - air_gapped_dir != ""
+        - air_gapped_dir | default('') != ""
 
     - name: bootc upgrade
       command: bootc upgrade
       become: true
       when:
-        - air_gapped_dir == ""
+        - air_gapped_dir | default('') == ""
 
     - name: Reboot to deploy new system
       reboot:
