@@ -48,7 +48,7 @@
               set_fact:
                 failed_counter: "{{ failed_counter | int + 1 }}"
           when:
-            - air_gapped_dir == ""
+            - air_gapped_dir | default('') == ""
 
         - name: check installed package
           shell: rpm -qa | sort
