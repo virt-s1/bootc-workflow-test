@@ -5,5 +5,31 @@
     ":semanticCommits",
     ":semanticCommitTypeAll(ci)",
     ":semanticCommitScopeDisabled"
+  ],
+  "packageRules": [
+    {
+      "matchDepNames": [
+        "quay.io/fedora/fedora"
+      ],
+      "matchManagers": [
+        "dockerfile",
+        "github-actions"
+      ],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "Containerfile$",
+        ".github/workflows/.*\\.yml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>.*?) packageName=(?<packageName>.*?)( versioning=(?<versioning>.*?))?\\sFROM\\s(?<depName>.*?):(?<currentValue>.*)",
+        "#\\s+renovate:\\s+datasource=(?<datasource>.*?) packageName=(?<packageName>.*?)( versioning=(?<versioning>.*?))?\\s+container: (?<depName>.*?):(?<currentValue>.*)"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{/if}}"
+    }
   ]
 }
