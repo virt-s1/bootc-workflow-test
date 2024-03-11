@@ -28,7 +28,6 @@ SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 SSH_KEY_PUB="${SSH_KEY}.pub"
 
-git submodule update
 LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
 LAYERED_DIR="examples/$LAYERED_IMAGE"
 INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
@@ -113,12 +112,14 @@ sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/a
 greenprint "Create $TEST_OS installation Containerfile"
 sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO|" "$INSTALL_CONTAINERFILE"
 ROOT_SSH_KEY=""
-if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]]; then
+if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]] && [[ "$LAYERED_IMAGE" != "useradd-ssh" ]]; then
    SSH_USER="root"
    SSH_KEY_PUB_CONTENT=$(cat "${SSH_KEY_PUB}")
    ROOT_SSH_KEY="RUN mkdir -p /usr/etc-system/ && echo 'AuthorizedKeysFile /usr/etc-system/%u.keys' >> /etc/ssh/sshd_config.d/30-auth-system.conf && \
        echo \"$SSH_KEY_PUB_CONTENT\" > /usr/etc-system/root.keys && chmod 0600 /usr/etc-system/root.keys"
    REPLACE_CLOUD_USER=""
+elif [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
+   sed -i "s|exampleuser|$SSH_USER|g" "$INSTALL_CONTAINERFILE"
 fi
 tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 RUN dnf -y clean all
@@ -136,7 +137,11 @@ podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 retry podman pull "$TIER1_IMAGE_URL"
 
 greenprint "Build $TEST_OS installation container image"
-retry podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
+    retry podman build --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+else
+    retry podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+fi
 
 greenprint "Push $TEST_OS installation container image"
 retry podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
