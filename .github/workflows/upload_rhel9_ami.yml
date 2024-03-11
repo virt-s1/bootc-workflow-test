@@ -4,17 +4,18 @@ name: Upload RHEL9 AMI Image
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 23 * * 0,3'
+    - cron: "30 23 * * 0,3"
 
 jobs:
   update_ami:
     runs-on: container-runner
+    # renovate: datasource=endoflife-date depName=fedora versioning=docker
     container: quay.io/fedora/fedora:39
     steps:
       - name: Install unzip and git
         run: sudo dnf install -y unzip git gh
 
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
 
       - name: Get current date
         id: date
@@ -64,14 +65,14 @@ jobs:
 
       - name: Enable Pull Request Automerge
         if: steps.cpr.outputs.pull-request-operation == 'created'
-        uses: peter-evans/enable-pull-request-automerge@a660677d5469627102a1c1e11409dd063606628d  # v3
+        uses: peter-evans/enable-pull-request-automerge@a660677d5469627102a1c1e11409dd063606628d # v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
           merge-method: rebase
 
       - name: Add a comment to trigger test workflow
-        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043  # v4
+        uses: peter-evans/create-or-update-comment@71345be0265236311c031f5c7866368bd1eff043 # v4
         with:
           token: ${{ secrets.PAT }}
           issue-number: ${{ steps.cpr.outputs.pull-request-number }}
