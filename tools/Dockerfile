@@ -1,4 +1,4 @@
-FROM quay.io/fedora/fedora:41@sha256:7553d963285e44a011c9464aa773ff4de9f2bec7325007d77c39e2d1cc90e8e1
+FROM quay.io/fedora/fedora:41@sha256:220fde50fb85e7bd16ffe12167e91899dfee77bbbd04ff71a4db398866a7a8b5
 
 # Google Cloud SDK repo
 COPY google-cloud-sdk.repo /etc/yum.repos.d/
