@@ -27,6 +27,7 @@ execute:
   tag: openstack
   environment+:
     PLATFORM: openstack
+    LAYERED_IMAGE: useradd-ssh
   adjust+:
     - when: arch != x86_64
       enabled: false
@@ -36,6 +37,7 @@ execute:
   tag: gcp
   environment+:
     PLATFORM: gcp
+    LAYERED_IMAGE: gcp
   prepare+:
     - how: shell
       script: cp tools/google-cloud-sdk.repo /etc/yum.repos.d/
@@ -51,6 +53,7 @@ execute:
   tag: aws
   environment+:
     PLATFORM: aws
+    LAYERED_IMAGE: cloud-init
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
@@ -60,6 +63,7 @@ execute:
   tag: [libvirt, stable]
   environment+:
     PLATFORM: libvirt
+    LAYERED_IMAGE: qemu-guest-agent
     AIR_GAPPED: 1
   prepare+:
     - how: install
