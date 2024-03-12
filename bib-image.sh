@@ -1,8 +1,6 @@
 #!/bin/bash
 set -exuo pipefail
 
-ARCH=$(uname -m)
-
 # Colorful timestamped output.
 function greenprint {
     echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
@@ -55,6 +53,7 @@ yum_repos:
     enabled: true
     gpgcheck: false
 EOF
+        GUEST_ID_DC70="rhel9_64Guest"
         ;;
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
@@ -66,6 +65,7 @@ EOF
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
+        GUEST_ID_DC70="centos9_64Guest"
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
@@ -114,6 +114,11 @@ COPY auth.json /etc/ostree/auth.json
 $REPLACE_CLOUD_USER
 EOF
 
+greenprint "Replace cloud-init with open-vm-tools for vmdk image"
+if [[ "$IMAGE_TYPE" == "vmdk" ]]; then
+    sed -i "s/cloud-init/open-vm-tools/" "$INSTALL_CONTAINERFILE"
+fi
+
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
 
@@ -123,13 +128,13 @@ podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 n=0
 until [ "$n" -ge 3 ]
 do
-   podman pull "$TIER1_IMAGE_URL" && break
+   podman pull --tls-verify=false "$TIER1_IMAGE_URL" && break
    n=$((n+1))
    sleep 10
 done
 
 greenprint "Build $TEST_OS installation container image"
-podman build --platform "$BUILD_PLATFORM" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
 greenprint "Push $TEST_OS installation container image"
 podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
@@ -218,6 +223,84 @@ case "$IMAGE_TYPE" in
             -e bib="true" \
             "playbooks/deploy-libvirt.yaml"
         ;;
+    "vmdk")
+        mkdir -p output
+
+        greenprint "Generate config file for $IMAGE_TYPE"
+        tee -a "output/config.json" > /dev/null << EOF
+{
+  "blueprint": {
+    "customizations": {
+      "user": [
+        {
+          "name": "$SSH_USER",
+          "password": "foobar",
+          "key": "$(cat "$SSH_KEY_PUB")",
+          "groups": [
+            "wheel"
+          ]
+        }
+      ]
+    }
+  }
+}
+EOF
+
+        greenprint "Build $TEST_OS $IMAGE_TYPE image"
+        sudo podman run \
+            --rm \
+            -it \
+            --privileged \
+            --pull=newer \
+            --security-opt label=type:unconfined_t \
+            -v "$(pwd)/output":/output \
+            quay.io/centos-bootc/bootc-image-builder:latest \
+            --type vmdk \
+            --config "/output/config.json" \
+            --target-arch "$ARCH" \
+            "$TEST_IMAGE_URL"
+
+        greenprint "Deploy $IMAGE_TYPE instance"
+        sudo curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
+
+        DATACENTER_70="Datacenter7.0"
+        DATASTORE_70="datastore-80"
+        DATACENTER_70_POOL="/Datacenter7.0/host/Automation/Resources"
+        FIRMWARE_LIST=( \
+            "bios" \
+            "efi" \
+        )
+        RND_LINE=$((RANDOM % 2))
+        FIRMWARE="${FIRMWARE_LIST[$RND_LINE]}"
+        greenprint "📋 Random run firmware: $FIRMWARE"
+        VMDK_FILENAME="${TEST_OS}-${ARCH}-${QUAY_REPO_TAG}"
+        VSPHERE_VM_NAME="bib-${FIRMWARE}-${VMDK_FILENAME}-v70"
+
+        greenprint "📋 Rename vmdk file name"
+        sudo mv output/vmdk/disk.vmdk "output/vmdk/${VMDK_FILENAME}.vmdk"
+        sudo chmod 644 "output/vmdk/${VMDK_FILENAME}.vmdk"
+        sudo chown "$(whoami)" "output/vmdk/${VMDK_FILENAME}.vmdk"
+
+        greenprint "📋 Uploading vmdk image to vsphere datacenter 7.0"
+        govc import.vmdk -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -pool="${DATACENTER_70_POOL}" "output/vmdk/${VMDK_FILENAME}.vmdk" > /dev/null
+        sudo rm -rf output
+
+
+        greenprint "📋 Create vm in vsphere datacenter 7.0"
+        govc vm.create -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -pool="${DATACENTER_70_POOL}" \
+            -net="VM Network" -net.adapter=vmxnet3 -disk.controller=pvscsi -on=false -c=2 -m=4096 \
+            -g="${GUEST_ID_DC70}" -firmware="$FIRMWARE" "${VSPHERE_VM_NAME}"
+
+        govc vm.disk.attach -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -vm "${VSPHERE_VM_NAME}" \
+            -link=false -disk="${VMDK_FILENAME}/${VMDK_FILENAME}.vmdk"
+
+        govc vm.power -on -dc="${DATACENTER_70}" "${VSPHERE_VM_NAME}"
+
+        GUEST_ADDRESS=$(govc vm.ip -v4 -dc="${DATACENTER_70}" -wait=10m "${VSPHERE_VM_NAME}")
+        greenprint "🛃 Edge VM IP address is: ${GUEST_ADDRESS}"
+        sed -i "/\[guest\]/a $GUEST_ADDRESS" "$INVENTORY_FILE"
+        sed -i "/\[guest:vars\]/a ansible_become_password=foobar" "$INVENTORY_FILE"
+        ;;
     *)
         redprint "Variable IMAGE_TYPE has to be defined"
         exit 1
@@ -239,7 +322,7 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --platform "$BUILD_PLATFORM" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
 podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
@@ -261,11 +344,16 @@ ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     playbooks/rollback.yaml
 
-greenprint "Terminate $PLATFORM instance and deregister AMI"
-ansible-playbook -v \
-    -i "$INVENTORY_FILE" \
-    -e platform="$PLATFORM" \
-    playbooks/remove.yaml
+if [[ "$IMAGE_TYPE" == vmdk ]]; then
+    greenprint "Delete $VSPHERE_VM_NAME from vsphere"
+    govc vm.destroy -dc="${DATACENTER_70}" "${VSPHERE_VM_NAME}"
+else
+    greenprint "Terminate $PLATFORM instance and deregister AMI"
+    ansible-playbook -v \
+        -i "$INVENTORY_FILE" \
+        -e platform="$PLATFORM" \
+        playbooks/remove.yaml
+fi
 
 greenprint "Clean up"
 rm -rf auth.json rhel-9-4.repo
