@@ -40,6 +40,12 @@
       set_fact:
         random_instance_type: "{{ lookup('env', 'instance_type') | default(instance_type[arch][instance_type_index], true) }}"
 
+    - name: set random instance type to a fixed value if derived image is nvidia
+      set_fact:
+        random_instance_type: "g5.xlarge"
+      when:
+        - layered_image | default('') == "nvidia"
+
     - name: "get available zone for instance {{ random_instance_type }}"
       shell: aws ec2 describe-instance-type-offerings --location-type availability-zone --filters="Name=instance-type,Values={{ random_instance_type }}" --query InstanceTypeOfferings | jq -r '.[0].Location'
       register: ec2_zone

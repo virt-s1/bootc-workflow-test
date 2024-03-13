@@ -111,20 +111,23 @@ sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/a
 [[ $debug == 1 ]] && set -x
 greenprint "Create $TEST_OS installation Containerfile"
 sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO|" "$INSTALL_CONTAINERFILE"
-ROOT_SSH_KEY=""
+USER_CONFIG=""
 if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]] && [[ "$LAYERED_IMAGE" != "useradd-ssh" ]]; then
    SSH_USER="root"
    SSH_KEY_PUB_CONTENT=$(cat "${SSH_KEY_PUB}")
-   ROOT_SSH_KEY="RUN mkdir -p /usr/etc-system/ && echo 'AuthorizedKeysFile /usr/etc-system/%u.keys' >> /etc/ssh/sshd_config.d/30-auth-system.conf && \
+   USER_CONFIG="RUN mkdir -p /usr/etc-system/ && echo 'AuthorizedKeysFile /usr/etc-system/%u.keys' >> /etc/ssh/sshd_config.d/30-auth-system.conf && \
        echo \"$SSH_KEY_PUB_CONTENT\" > /usr/etc-system/root.keys && chmod 0600 /usr/etc-system/root.keys"
    REPLACE_CLOUD_USER=""
+elif [[ "$PLATFORM" == "aws" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]]; then
+   USER_CONFIG="RUN dnf -y install cloud-init && \
+       ln -s ../cloud-init.target /usr/lib/systemd/system/default.target.wants"
 elif [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
    sed -i "s|exampleuser|$SSH_USER|g" "$INSTALL_CONTAINERFILE"
 fi
 tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 RUN dnf -y clean all
 COPY auth.json /etc/ostree/auth.json
-$ROOT_SSH_KEY
+$USER_CONFIG
 $REPLACE_CLOUD_USER
 EOF
 
@@ -174,6 +177,7 @@ ansible-playbook -v \
     -e ssh_key_pub="$SSH_KEY_PUB" \
     -e inventory_file="$INVENTORY_FILE" \
     -e air_gapped_dir="$AIR_GAPPED_DIR" \
+    -e layered_image="$LAYERED_IMAGE" \
     "playbooks/deploy-${PLATFORM}.yaml"
 
 greenprint "Install $TEST_OS bootc system"
@@ -185,6 +189,7 @@ ansible-playbook -v \
 if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" == "qemu-guest-agent" ]]; then
     virsh guestinfo bootc-"$TEST_OS"
 fi
+
 greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \

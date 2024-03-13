@@ -372,6 +372,60 @@
       when:
         - layered_image | default('') == "qemu-guest-agent"
 
+    - name: check nvidia-driver in nvidia derived image
+      block:
+        - name: run nvidia-smi
+          command: nvidia-smi -L
+          register: nvidia_smi_result
+          become: true
+
+        - assert:
+            that:
+              - nvidia_smi_result is succeeded
+              - "'GPU 0: NVIDIA A10G' in nvidia_smi_result.stdout"
+            fail_msg: "nvidia-smi -L != GPU NVIDIA A10G in nvidia derived image"
+            success_msg: "nvidia-smi -L = GPU NVIDIA A10G in nvidia derived image"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - layered_image | default('') == "nvidia"
+
+    - name: check nvidia-container-toolkit in nvidia derived image
+      block:
+        - name: run nvidia-ctk cdi generate
+          command: nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+          become: true
+
+        - name: run nvidia-ctk cdi list
+          command: nvidia-ctk cdi list
+          become: true
+
+        - name: run nvidia-smi in container
+          command: podman run --rm --device nvidia.com/gpu=all --security-opt=label=disable quay.io/centos/centos:stream9 nvidia-smi -L
+          register: nvidia_smi_container_result
+          become: true
+
+        - assert:
+            that:
+              - nvidia_smi_container_result is succeeded
+              - "'GPU 0: NVIDIA A10G' in nvidia_smi_container_result.stdout"
+            fail_msg: "podman run nvidia-smi -L != GPU NVIDIA A10G in nvidia derived image"
+            success_msg: "podman run nvidia-smi -L = GPU NVIDIA A10G in nvidia derived image"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - layered_image | default('') == "nvidia"
+
     # case: check dmesg error and failed log
     - name: check dmesg output
       command: dmesg
