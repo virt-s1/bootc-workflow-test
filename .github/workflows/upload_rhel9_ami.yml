@@ -4,7 +4,7 @@ name: Upload RHEL9 AMI Image
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 23 * * 0,3"
+    - cron: '30 23 * * 0'
 
 jobs:
   update_ami:
