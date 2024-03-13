@@ -2,7 +2,7 @@
 
 /usr/local/bin/aws ec2 run-instances \
     --associate-public-ip-address \
-    --block-device-mappings DeviceName=/dev/xvda,Ebs=\{DeleteOnTermination=true,VolumeSize=12,VolumeType=gp2,Encrypted=false\} \
+    --block-device-mappings DeviceName=/dev/xvda,Ebs=\{DeleteOnTermination=true,VolumeSize=20,VolumeType=gp2,Encrypted=false\} \
 {% if random_instance_type.startswith('t3') or random_instance_type.startswith('t4g') %}
     --credit-specification CpuCredits=standard \
 {% endif %}
@@ -14,7 +14,11 @@
 {% else %}
     --image-id {{ ami_id }} \
 {% endif %}
+{% if layered_image is defined and layered_image == 'nvidia' %}
+    --instance-market-options MarketType=spot,SpotOptions=\{MaxPrice=1.0,SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate\} \
+{% else %}
     --instance-market-options MarketType=spot,SpotOptions=\{MaxPrice=0.1,SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate\} \
+{% endif %}
     --instance-type {{ random_instance_type }} \
     --key-name kp-bootc-{{ random_num }} \
     --security-group-ids {{ group_id }} \
