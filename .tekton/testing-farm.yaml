@@ -134,6 +134,7 @@ spec:
           --environment GCP_PROJECT="${GCP_PROJECT}" \
           --environment AWS_REGION="${AWS_REGION}" \
           --environment CI="RHTAP" \
+          --environment ARCH="${ARCH}" \
           --secret QUAY_USERNAME="${QUAY_USERNAME}" \
           --secret QUAY_PASSWORD="${QUAY_PASSWORD}" \
           --secret QUAY_SECRET="${QUAY_SECRET}" \

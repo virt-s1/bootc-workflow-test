@@ -426,6 +426,27 @@
       when:
         - layered_image | default('') == "nvidia"
 
+    - name: check open-vm-tools
+      block:
+        - name: check open-vm-tools service status
+          command: systemctl is-active vmtoolsd
+          register: result_vmtoolsd
+
+        - assert:
+            that:
+              - result_vmtoolsd.stdout == "active"
+            fail_msg: "vmtoolsd is not started by default"
+            success_msg: "starting vmtoolsd successful"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when:
+        - layered_image | default('') == "vmware"
+
     # case: check dmesg error and failed log
     - name: check dmesg output
       command: dmesg
