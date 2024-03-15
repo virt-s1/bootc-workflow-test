@@ -114,9 +114,9 @@ COPY auth.json /etc/ostree/auth.json
 $REPLACE_CLOUD_USER
 EOF
 
-greenprint "Replace cloud-init with open-vm-tools for vmdk image"
+greenprint "Install cloud-init for vmdk image"
 if [[ "$IMAGE_TYPE" == "vmdk" ]]; then
-    sed -i "s/cloud-init/open-vm-tools/" "$INSTALL_CONTAINERFILE"
+    sed -i "s/open-vm-tools/cloud-init open-vm-tools/" "$INSTALL_CONTAINERFILE"
 fi
 
 greenprint "Check $TEST_OS installation Containerfile"
@@ -125,19 +125,11 @@ cat "$INSTALL_CONTAINERFILE"
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
-n=0
-until [ "$n" -ge 3 ]
-do
-   podman pull --tls-verify=false "$TIER1_IMAGE_URL" && break
-   n=$((n+1))
-   sleep 10
-done
-
 greenprint "Build $TEST_OS installation container image"
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 
 greenprint "Push $TEST_OS installation container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -171,6 +163,7 @@ case "$IMAGE_TYPE" in
             -it \
             --privileged \
             --pull=newer \
+            --tls-verify=false \
             --security-opt label=type:unconfined_t \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
@@ -206,6 +199,7 @@ case "$IMAGE_TYPE" in
             -it \
             --privileged \
             --pull=newer \
+            --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
@@ -226,37 +220,17 @@ case "$IMAGE_TYPE" in
     "vmdk")
         mkdir -p output
 
-        greenprint "Generate config file for $IMAGE_TYPE"
-        tee -a "output/config.json" > /dev/null << EOF
-{
-  "blueprint": {
-    "customizations": {
-      "user": [
-        {
-          "name": "$SSH_USER",
-          "password": "foobar",
-          "key": "$(cat "$SSH_KEY_PUB")",
-          "groups": [
-            "wheel"
-          ]
-        }
-      ]
-    }
-  }
-}
-EOF
-
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         sudo podman run \
             --rm \
             -it \
             --privileged \
             --pull=newer \
+            --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type vmdk \
-            --config "/output/config.json" \
             --target-arch "$ARCH" \
             "$TEST_IMAGE_URL"
 
@@ -282,24 +256,94 @@ EOF
         sudo chown "$(whoami)" "output/vmdk/${VMDK_FILENAME}.vmdk"
 
         greenprint "📋 Uploading vmdk image to vsphere datacenter 7.0"
-        govc import.vmdk -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -pool="${DATACENTER_70_POOL}" "output/vmdk/${VMDK_FILENAME}.vmdk" > /dev/null
+        govc import.vmdk \
+            -dc="${DATACENTER_70}" \
+            -ds="${DATASTORE_70}" \
+            -pool="${DATACENTER_70_POOL}" \
+            "output/vmdk/${VMDK_FILENAME}.vmdk" > /dev/null
         sudo rm -rf output
 
+        greenprint "📋 Generate user-data and meta-data"
+        envsubst > metadata.yaml <<EOF
+instance-id: bib-${QUAY_REPO_TAG}
+local-hostname: bib-${TEST_OS}
+EOF
+        cat metadata.yaml
+
+        envsubst > userdata.yaml <<EOF
+#cloud-config
+users:
+  - default
+  - name: $SSH_USER
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: sudo, wheel
+    lock_passwd: true
+    ssh_authorized_keys:
+      - $(cat "$SSH_KEY_PUB")
+EOF
+        cat userdata.yaml
+
+        METADATA=$(gzip -c9 <metadata.yaml | { base64 -w0 2>/dev/null || base64; })
+        USERDATA=$(gzip -c9 <userdata.yaml | { base64 -w0 2>/dev/null || base64; })
 
         greenprint "📋 Create vm in vsphere datacenter 7.0"
-        govc vm.create -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -pool="${DATACENTER_70_POOL}" \
-            -net="VM Network" -net.adapter=vmxnet3 -disk.controller=pvscsi -on=false -c=2 -m=4096 \
-            -g="${GUEST_ID_DC70}" -firmware="$FIRMWARE" "${VSPHERE_VM_NAME}"
+        govc vm.create \
+            -dc="$DATACENTER_70" \
+            -ds="$DATASTORE_70" \
+            -pool="$DATACENTER_70_POOL" \
+            -net="VM Network" \
+            -net.adapter=vmxnet3 \
+            -disk.controller=pvscsi \
+            -on=false \
+            -c=2 \
+            -m=4096 \
+            -g="$GUEST_ID_DC70" \
+            -firmware="$FIRMWARE" \
+            "$VSPHERE_VM_NAME"
 
-        govc vm.disk.attach -dc="${DATACENTER_70}" -ds="${DATASTORE_70}" -vm "${VSPHERE_VM_NAME}" \
-            -link=false -disk="${VMDK_FILENAME}/${VMDK_FILENAME}.vmdk"
+        govc vm.change \
+            -dc="$DATACENTER_70" \
+            -vm="$VSPHERE_VM_NAME" \
+            -e guestinfo.metadata="$METADATA" \
+            -e guestinfo.metadata.encoding="gzip+base64" \
+            -e guestinfo.userdata="$USERDATA" \
+            -e guestinfo.userdata.encoding="gzip+base64" \
 
-        govc vm.power -on -dc="${DATACENTER_70}" "${VSPHERE_VM_NAME}"
+        govc vm.disk.attach \
+            -dc="$DATACENTER_70" \
+            -ds="$DATASTORE_70" \
+            -vm="$VSPHERE_VM_NAME" \
+            -link=false \
+            -disk="${VMDK_FILENAME}/${VMDK_FILENAME}.vmdk"
 
-        GUEST_ADDRESS=$(govc vm.ip -v4 -dc="${DATACENTER_70}" -wait=10m "${VSPHERE_VM_NAME}")
-        greenprint "🛃 Edge VM IP address is: ${GUEST_ADDRESS}"
+        govc vm.power \
+            -on \
+            -dc="$DATACENTER_70" \
+            "$VSPHERE_VM_NAME"
+
+        GUEST_ADDRESS=$(govc vm.ip -v4 -dc="$DATACENTER_70" -wait=10m "$VSPHERE_VM_NAME")
+        greenprint "🛃 VM IP address is: $GUEST_ADDRESS"
         sed -i "/\[guest\]/a $GUEST_ADDRESS" "$INVENTORY_FILE"
-        sed -i "/\[guest:vars\]/a ansible_become_password=foobar" "$INVENTORY_FILE"
+
+        wait_for_ssh_up () {
+            SSH_OPTIONS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5)
+            SSH_STATUS=$(sudo ssh "${SSH_OPTIONS[@]}" -i "${SSH_KEY}" ${SSH_USER}@"${1}" '/bin/bash -c "echo -n READY"')
+            if [[ $SSH_STATUS == READY ]]; then
+                echo 1
+            else
+                echo 0
+            fi
+        }
+
+        greenprint "🛃 Checking for SSH is ready to go"
+        for _ in $(seq 0 30); do
+            RESULT=$(wait_for_ssh_up "$GUEST_ADDRESS")
+            if [[ $RESULT == 1 ]]; then
+                echo "SSH is ready now! 🥳"
+                break
+            fi
+            sleep 10
+        done
         ;;
     *)
         redprint "Variable IMAGE_TYPE has to be defined"
@@ -323,9 +367,9 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
