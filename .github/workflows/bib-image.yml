@@ -221,7 +221,7 @@ jobs:
           arch: "${{ matrix.build_arch }}"
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bib-cs9-dev-${{ matrix.arch }}-on-${{ matrix.build_arch }}"
+          pull_request_status_name: "bib-${{ matrix.arch }}-on-${{ matrix.build_arch }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"
