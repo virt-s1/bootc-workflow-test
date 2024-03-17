@@ -79,7 +79,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
@@ -124,7 +124,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: CentOS-Stream-9
           api_key: ${{ secrets.TF_API_KEY }}
@@ -149,9 +149,18 @@ jobs:
       matrix:
         arch: [x86_64, aarch64]
         image_type: [ami, qcow2, vmdk]
+        build_arch: [x86_64, aarch64]
         exclude:
-          - arch: aarch64
-            image_type: vmdk
+          - image_type: vmdk
+            arch: aarch64
+          - image_type: vmdk
+            build_arch: aarch64
+          - image_type: qcow2
+            arch: x86_64
+            build_arch: aarch64
+          - image_type: qcow2
+            arch: aarch64
+            build_arch: x86_64
         include:
           - image_type: ami
             platform: aws
@@ -169,60 +178,17 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
-        with:
-          compose: CentOS-Stream-9
-          api_key: ${{ secrets.TF_API_KEY }}
-          git_url: ${{ needs.pr-info.outputs.repo_url }}
-          git_ref: ${{ needs.pr-info.outputs.ref }}
-          arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
-          update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
-          tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
-
-  cs9-dev-bib-cross-build:
-    needs: pr-info
-    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-bib-image') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-bib-cross-build')) }}
-    continue-on-error: true
-    strategy:
-      matrix:
-        arch: [x86_64, aarch64]
-        image_type: [ami]
-        platform: [aws]
-        build_arch: [x86_64, aarch64]
-        exclude:
-          - arch: aarch64
-            build_arch: aarch64
-          - arch: x86_64
-            build_arch: x86_64
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Clone repository
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
-        with:
-          ref: ${{ needs.pr-info.outputs.sha }}
-          fetch-depth: 0
-
-      - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-Rawhide
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
-          arch: "${{ matrix.build_arch }}"
+          arch: ${{ matrix.build_arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-bib-${{ matrix.image_type }}-on-${{ matrix.build_arch }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }}"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
+          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
