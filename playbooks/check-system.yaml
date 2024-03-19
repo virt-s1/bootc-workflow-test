@@ -545,13 +545,14 @@
       when: "'rhel' in test_os"
 
     # case: check system reboot
+    # 5 minutes reboot timeout is for bare metal test
     - name: check system reboot
       block:
         - name: check system reboot
           reboot:
             post_reboot_delay: 60
             pre_reboot_delay: 60
-            reboot_timeout: 180
+            reboot_timeout: 300
           become: true
           ignore_errors: true
 

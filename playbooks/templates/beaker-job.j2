@@ -1,0 +1,51 @@
+<job group='rhel-edge'>
+  <whiteboard>Provisioned for {{ arch }} bootc install test</whiteboard>
+  <recipeSet>
+    <recipe kernel_options="" kernel_options_post="" ks_meta="no_autopart" role="None" whiteboard="">
+      <autopick random="false"/>
+      <watchdog panic="None"/>
+      <packages/>
+      <ks_appends>
+        <ks_append><![CDATA[
+user --name={{ ssh_user }} --groups=wheel --iscrypted
+sshkey --username={{ ssh_user }} "{{ lookup('ansible.builtin.file', ssh_key_pub) }}"
+zerombr
+clearpart --all --initlabel --disklabel=gpt
+{% if bare_metal_partition == "lvm" %}
+part biosboot --size=1 --fstype=biosboot
+part /boot --size=1000 --fstype=ext4 --label=boot
+part pv.01 --grow
+volgroup bootc pv.01
+logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
+{% else %}
+autopart --type=plain --fstype=xfs
+{% endif %}
+%packages
+podman
+python3
+python3-dnf
+%end
+%post
+echo -e '{{ ssh_user }}\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
+%end
+        ]]></ks_append>
+      </ks_appends>
+      <repos/>
+      <distroRequires>
+        <and>
+          <distro_name op="=" value="{{ distro_name }}"/>
+          <distro_arch op="=" value="{{ arch }}"/>
+        </and>
+      </distroRequires>
+      <hostRequires>
+        <and>
+          <arch op="=" value="{{ arch }}"/>
+          <hypervisor op="=" value=""/>
+        </and>
+      </hostRequires>
+      <partitions/>
+      <task name="/distribution/check-install" role="STANDALONE"/>
+      <task name="/distribution/reservesys" role="STANDALONE"/>
+    </recipe>
+  </recipeSet>
+</job>

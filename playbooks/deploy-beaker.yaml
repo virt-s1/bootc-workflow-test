@@ -1,0 +1,115 @@
+---
+- hosts: cloud
+  gather_facts: false
+  become: false
+  vars:
+    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
+    ssh_user: ""
+    ssh_key_pub: ""
+    inventory_file: ""
+    bare_metal_partition: "standard"
+    beaker_family:
+      rhel-9-4: RedHatEnterpriseLinux9
+      centos-stream-9: CentOSStream9
+    beaker_compose:
+      # avoid rhel-9.4.0-updates-2024xxxx.xx
+      rhel-9-4: rhel-9.4.0-20
+      centos-stream-9: CentOS-Stream-9
+
+  tasks:
+    - name: "get latest {{ beaker_family[test_os] }} distro"
+      command: bkr distros-list --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --tag CTS_NIGHTLY --limit 1 --format json
+      register: distro_result_rhel
+      when: "'rhel' in test_os"
+
+    - name: "get latest {{ beaker_family[os] }} distro"
+      command: bkr distros-list --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --limit 1 --format json
+      register: distro_result_other
+      when: "'rhel' not in test_os"
+
+    - name: json format for rhel
+      set_fact:
+        tmp_result: "{{ distro_result_rhel.stdout | from_json }}"
+      when: "'rhel' in test_os"
+
+    - name: json format for others
+      set_fact:
+        tmp_result: "{{ distro_result_other.stdout | from_json }}"
+      when: "'rhel' not in test_os"
+
+    - name: set latest distro name
+      set_fact:
+        distro_name: "{{ tmp_result[0].distro_name }}"
+
+    - name: generate job xml
+      template:
+        src: beaker-job.j2
+        dest: beaker-job.xml
+
+    - name: submit beaker job
+      command: bkr job-submit beaker-job.xml
+      register: job_result
+
+    - name: got job id
+      set_fact:
+        job_id: "{{ job_result.stdout.split(\"'\")[1] }}"
+
+    - name: wait for job complete
+      command: bkr job-results --prettyxml {{ job_id }}
+      register: job_finished
+      retries: 50
+      delay: 60
+      until: "'result=\"Pass\" status=\"Running\"' in job_finished.stdout"
+      ignore_errors: true
+
+    - name: write job-results output to xml file
+      copy:
+        content: "{{ job_finished.stdout }}"
+        dest: job-result-output.xml
+
+    - name: get hostname from job-results output
+      xml:
+        path: job-result-output.xml
+        xpath: /job/recipeSet/recipe
+        content: attribute
+      register: recipe_attribute
+
+    - set_fact:
+        instance_ip: "{{ recipe_attribute.matches[0].recipe.system }}"
+
+    - name: Waits until instance is reachable
+      wait_for:
+        host: "{{ instance_ip }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      retries: 30
+      register: result_ssh_check
+      until: result_ssh_check is success
+
+    - name: Add instance ip into host group guest
+      add_host:
+        name: "{{ instance_ip }}"
+        groups: guest
+
+    - name: Wait 10 seconds for VM
+      wait_for:
+        timeout: 10
+      delegate_to: localhost
+
+    - name: Write instance ip to inventory file
+      community.general.ini_file:
+        path: "{{ inventory_file }}"
+        section: guest
+        option: guest ansible_host
+        value: "{{ instance_ip }}"
+        no_extra_spaces: true
+
+    - name: Write instance name to inventory file
+      community.general.ini_file:
+        path: "{{ inventory_file }}"
+        section: cloud:vars
+        option: job_id
+        value: "{{ job_id }}"
+        no_extra_spaces: true
