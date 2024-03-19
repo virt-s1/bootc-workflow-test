@@ -10,10 +10,11 @@
       command: rpm-ostree rollback
       become: true
 
+    # 5 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system
       reboot:
         post_reboot_delay: 60
-        reboot_timeout: 180
+        reboot_timeout: 300
       become: true
       ignore_errors: true
 

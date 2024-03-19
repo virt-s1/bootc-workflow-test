@@ -45,7 +45,7 @@
         - "'rhel' in test_os"
         - platform == "aws"
 
-    - name: Auth for RHEL private image
+    - name: Auth for private image
       command:
         podman login \
         -u "{{ lookup('env', 'QUAY_USERNAME') }}" \
@@ -62,7 +62,23 @@
       register: result
       until: result is successful
 
-    - name: Install image
+    # The latest bootc is only available in centos-bootc-dev image
+    - name: Install image with latest bootc
+      command:
+        "podman run \
+         --rm \
+         --privileged \
+         --pid=host \
+         -v /:/target \
+         -v /dev:/dev \
+         -v /var/lib/containers:/var/lib/containers \
+         --security-opt label=type:unconfined_t \
+         {{ test_image_url }} \
+         bootc install to-existing-root"
+      become: true
+      when: "'centos-bootc-dev' in test_image_url"
+
+    - name: Install image with released bootc
       command:
         "podman run \
          --rm \
@@ -74,11 +90,13 @@
          {{ test_image_url }} \
          bootc install to-filesystem --replace=alongside /target"
       become: true
+      when: "'centos-bootc-dev' not in test_image_url"
 
+    # 5 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system
       reboot:
         post_reboot_delay: 60
-        reboot_timeout: 180
+        reboot_timeout: 600
       become: true
       ignore_errors: true
 

@@ -65,3 +65,9 @@
             state: absent
           when: ami_id != ""
       when: platform == "aws"
+
+    - name: Cancel beaker job
+      block:
+        - name: "cancel beaker job {{ job_id }}"
+          command: bkr job-cancel "{{ job_id }}"
+      when: platform == "beaker"

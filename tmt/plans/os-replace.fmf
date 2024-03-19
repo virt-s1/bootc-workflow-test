@@ -81,3 +81,18 @@ execute:
         hardware:
           virtualization:
             is-supported: true
+
+/beaker:
+  summary: Run os-replace test on bare metal beaker server
+  tag: beaker
+  environment+:
+    PLATFORM: beaker
+    LAYERED_IMAGE: useradd-ssh
+  prepare+:
+    - how: install
+      package:
+        - beaker-client
+        - krb5-workstation
+  adjust+:
+    - when: arch != x86_64 and arch != aarch64
+      enabled: false
