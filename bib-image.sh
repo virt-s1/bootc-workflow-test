@@ -163,6 +163,7 @@ case "$IMAGE_TYPE" in
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type ami \
+            --target-arch "$ARCH" \
             --aws-ami-name "$AMI_NAME" \
             --aws-bucket "$AWS_BUCKET_NAME" \
             --aws-region "$AWS_REGION" \
@@ -197,6 +198,7 @@ case "$IMAGE_TYPE" in
             -v "$(pwd)/output":/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type qcow2 \
+            --target-arch "$ARCH" \
             "$TEST_IMAGE_URL"
 
         sudo mv output/qcow2/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
@@ -223,6 +225,7 @@ case "$IMAGE_TYPE" in
             -v "$(pwd)/output":/output \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type vmdk \
+            --target-arch "$ARCH" \
             "$TEST_IMAGE_URL"
 
         greenprint "Deploy $IMAGE_TYPE instance"
