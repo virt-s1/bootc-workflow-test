@@ -138,13 +138,12 @@ localhost
 
 [cloud:vars]
 ansible_connection=local
+ansible_python_interpreter=/root/venv/bin/python3
 
 [guest:vars]
 ansible_user="$SSH_USER"
 ansible_private_key_file="$SSH_KEY"
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
-[all:vars]
 ansible_python_interpreter=/usr/bin/python3
 EOF
 

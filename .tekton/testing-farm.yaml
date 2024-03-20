@@ -29,6 +29,9 @@ spec:
     - name: RHEL_REGISTRY_URL
     - name: GCP_PROJECT
     - name: AWS_REGION
+    - name: AZURE_SUBSCRIPTION_ID
+    - name: AZURE_CLIENT_ID
+    - name: AZURE_TENANT
   volumes:
     - name: testing-farm-secret
       secret:
@@ -64,6 +67,12 @@ spec:
           value: $(params.GCP_PROJECT)
         - name: AWS_REGION
           value: $(params.AWS_REGION)
+        - name: AZURE_SUBSCRIPTION_ID
+          value: $(params.AZURE_SUBSCRIPTION_ID)
+        - name: AZURE_CLIENT_ID
+          value: $(params.AZURE_CLIENT_ID)
+        - name: AZURE_TENANT
+          value: $(params.AZURE_TENANT)
         - name: GCP_SERVICE_ACCOUNT_FILE_B64
           valueFrom:
             secretKeyRef:
@@ -99,6 +108,11 @@ spec:
             secretKeyRef:
               name: "bootc-workflow-test-secret"
               key: "RHC_ORGID"
+        - name: AZURE_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "AZURE_SECRET"
       script: |
         #!/usr/bin/env bash
 
@@ -143,6 +157,9 @@ spec:
           --environment RHEL_REGISTRY_URL="${RHEL_REGISTRY_URL}" \
           --environment GCP_PROJECT="${GCP_PROJECT}" \
           --environment AWS_REGION="${AWS_REGION}" \
+          --environment AZURE_SUBSCRIPTION_ID="${AZURE_SUBSCRIPTION_ID}" \
+          --environment AZURE_CLIENT_ID="${AZURE_CLIENT_ID}" \
+          --environment AZURE_TENANT="${AZURE_TENANT}" \
           --environment CI="RHTAP" \
           --environment ARCH="${ARCH}" \
           --secret QUAY_USERNAME="${QUAY_USERNAME}" \
@@ -153,6 +170,7 @@ spec:
           --secret AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
           --secret RHC_AK="${RHC_AK}" \
           --secret RHC_ORGID="${RHC_ORGID}" \
+          --secret AZURE_SECRET="${AZURE_SECRET}" \
           --git-url "${GIT_URL}" \
           --git-ref "${GIT_REF}" \
           --compose "${COMPOSE}" \

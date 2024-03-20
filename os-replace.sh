@@ -111,6 +111,8 @@ if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]] && [
 elif [[ "$PLATFORM" == "aws" ]] && [[ "$LAYERED_IMAGE" != "cloud-init" ]]; then
    USER_CONFIG="RUN dnf -y install cloud-init && \
        ln -s ../cloud-init.target /usr/lib/systemd/system/default.target.wants"
+elif [[ "$LAYERED_IMAGE" == "azure" ]]; then
+   sed -i '/cloud.cfg/d' "$INSTALL_CONTAINERFILE"
 elif [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
    sed -i "s|exampleuser|$SSH_USER|g" "$INSTALL_CONTAINERFILE"
 fi
@@ -143,13 +145,12 @@ localhost
 
 [cloud:vars]
 ansible_connection=local
+ansible_python_interpreter=/root/venv/bin/python3
 
 [guest:vars]
 ansible_user="$SSH_USER"
 ansible_private_key_file="$SSH_KEY"
 ansible_ssh_common_args="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-
-[all:vars]
 ansible_python_interpreter=/usr/bin/python3
 EOF
 

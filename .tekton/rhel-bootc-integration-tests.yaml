@@ -38,6 +38,9 @@ spec:
     - name: RHEL_REGISTRY_URL
     - name: GCP_PROJECT
     - name: AWS_REGION
+    - name: AZURE_SUBSCRIPTION_ID
+    - name: AZURE_CLIENT_ID
+    - name: AZURE_TENANT
   tasks:
     - name: testing-farm
       taskRef:
@@ -74,3 +77,9 @@ spec:
           value: $(params.GCP_PROJECT)
         - name: AWS_REGION
           value: $(params.AWS_REGION)
+        - name: AZURE_SUBSCRIPTION_ID
+          value: $(params.AZURE_SUBSCRIPTION_ID)
+        - name: AZURE_CLIENT_ID
+          value: $(params.AZURE_CLIENT_ID)
+        - name: AZURE_TENANT
+          value: $(params.AZURE_TENANT)

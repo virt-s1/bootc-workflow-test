@@ -1,0 +1,153 @@
+---
+- hosts: cloud
+  gather_facts: false
+  become: false
+  vars:
+    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
+    ssh_key_pub: ""
+    inventory_file: ""
+    download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
+    rg_image: "bootc-images"
+    vm_size:
+      x86_64: Standard_D2ads_v5
+      aarch64: Standard_D2pds_v5
+
+  tasks:
+    - set_fact:
+        random_num: "{{ 9999 | random(start=1001) }}"
+    - set_fact:
+        rg_name: "bootc-{{ random_num }}"
+
+    - name: Read ssh_key_pub content
+      command: cat "{{ ssh_key_pub }}"
+      register: out
+
+    - set_fact:
+        ssh_pubkey_content: "{{ out.stdout }}"
+
+    - name: List images by resource group
+      azure_rm_image_info:
+        resource_group: 'bootc-images'
+        tags:
+          - project:bootc
+          - test_os:{{ test_os }}
+          - arch:{{ arch }}
+      register: result_image
+
+    - name: Image name
+      set_fact:
+        image: "{{ result_image.images[0].name }}"
+
+    - debug:
+        var: image
+
+    - name: Create resource group
+      azure.azcollection.azure_rm_resourcegroup:
+        name: "{{ rg_name }}"
+        location: eastus
+
+    - name: Create virtual network
+      azure.azcollection.azure_rm_virtualnetwork:
+        resource_group: "{{ rg_name }}"
+        name: "{{ rg_name }}_vnet"
+        address_prefixes: "172.30.0.0/16"
+
+    - name: Add subnet
+      azure.azcollection.azure_rm_subnet:
+        resource_group: "{{ rg_name }}"
+        name: "{{ rg_name }}_subnet"
+        address_prefix: "172.30.30.0/24"
+        virtual_network: "{{ rg_name }}_vnet"
+
+    - name: Create public IP address
+      azure.azcollection.azure_rm_publicipaddress:
+        resource_group: "{{ rg_name }}"
+        name: "{{ rg_name }}_ip"
+        allocation_method: Static
+      register: output_ip_address
+
+    - name: Public IP of VM
+      set_fact:
+        instance_ip: "{{ output_ip_address.state.ip_address }}"
+
+    - name: Create Network Security Group that allows SSH
+      azure.azcollection.azure_rm_securitygroup:
+        resource_group: "{{ rg_name }}"
+        name: "{{ rg_name }}_sg"
+        rules:
+          - name: SSH
+            protocol: Tcp
+            destination_port_range: 22
+            access: Allow
+            priority: 1001
+            direction: Inbound
+
+    - name: Create virtual network interface card
+      azure.azcollection.azure_rm_networkinterface:
+        resource_group: "{{ rg_name }}"
+        name: "{{ rg_name }}_nic"
+        virtual_network: "{{ rg_name }}_vnet"
+        subnet: "{{ rg_name }}_subnet"
+        public_ip_name: "{{ rg_name }}_ip"
+        security_group: "{{ rg_name }}_sg"
+
+    - name: Create VM
+      azure.azcollection.azure_rm_virtualmachine:
+        resource_group: "{{ rg_name }}"
+        name: bootc-{{ test_os }}-{{ random_num }}
+        vm_size: "{{ vm_size[arch] }}"
+        priority: Spot
+        os_type: Linux
+        storage_container_name: osdisk
+        network_interface_names: "{{ rg_name }}_nic"
+        os_disk_size_gb: 64
+        boot_diagnostics:
+          enabled: yes
+          type: managed
+        image:
+          resource_group: "{{ rg_image }}"
+          name: "{{ image }}"
+        admin_username: cloud-user
+        ssh_password_enabled: false
+        ssh_public_keys:
+          - path: /home/cloud-user/.ssh/authorized_keys
+            key_data: "{{ ssh_pubkey_content }}"
+      register: test_vm
+
+    - debug:
+        var: test_vm
+
+    - debug:
+        var: instance_ip
+
+    - name: waits until instance is reachable
+      wait_for:
+        host: "{{ instance_ip }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      retries: 30
+      register: result_ssh_check
+      until: result_ssh_check is success
+
+    - name: add instance ip into host group guest
+      add_host:
+        name: "{{ instance_ip }}"
+        groups: guest
+
+    - name: Write instance ip to inventory file
+      community.general.ini_file:
+        path: "{{ inventory_file }}"
+        section: guest
+        option: guest ansible_host
+        value: "{{ instance_ip }}"
+        no_extra_spaces: true
+
+    - name: Write resource group to inventory file
+      community.general.ini_file:
+        path: "{{ inventory_file }}"
+        section: cloud:vars
+        option: rg_name
+        value: "{{ rg_name }}"
+        no_extra_spaces: true
