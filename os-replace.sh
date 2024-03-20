@@ -1,24 +1,8 @@
 #!/bin/bash
 set -exuo pipefail
 
-# Colorful timestamped output.
-function greenprint {
-    echo -e "\033[1;32m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function redprint {
-    echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
-}
-
-function retry {
-    n=0
-    until [ "$n" -ge 3 ]
-    do
-       "$@" && break
-       n=$((n+1))
-       sleep 10
-    done
-}
+source tools/shared_lib.sh
+dump_runner
 
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
