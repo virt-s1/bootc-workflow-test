@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
       - uses: ludeeus/action-shellcheck@master
         with:
-          external-sources: true
+          check_together: 'yes'  # SC1091
 
   yamllint:
     name: "🔬 yamlint"
