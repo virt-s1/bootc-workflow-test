@@ -10,6 +10,9 @@ function redprint {
     echo -e "\033[1;31m[$(date -Isecond)] ${1}\033[0m"
 }
 
+greenprint "Check runner disk size"
+df -Th
+
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
 
