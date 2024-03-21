@@ -161,7 +161,7 @@ case "$IMAGE_TYPE" in
             --security-opt label=type:unconfined_t \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            quay.io/xiaofwan/bootc-image-builder:osbuild \
             --type ami \
             --target-arch "$ARCH" \
             --aws-ami-name "$AMI_NAME" \
@@ -196,7 +196,7 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            quay.io/xiaofwan/bootc-image-builder:osbuild \
             --type qcow2 \
             --target-arch "$ARCH" \
             "$TEST_IMAGE_URL"
@@ -223,7 +223,7 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            quay.io/xiaofwan/bootc-image-builder:osbuild \
             --type vmdk \
             --target-arch "$ARCH" \
             "$TEST_IMAGE_URL"
