@@ -2,6 +2,9 @@
 - hosts: guest
   become: false
   vars:
+    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    rhc_ak: "{{ lookup('env', 'RHC_AK') | default('', true) }}"
+    rhc_orgid: "{{ lookup('env', 'RHC_ORGID') | default('', true) }}"
     bootc_image: ""
     upgrade: ""
     composefs: "true"
@@ -512,6 +515,34 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+
+    - name: rhc check
+      block:
+        - name: run rhc connect
+          command: rhc connect --activation-key {{ rhc_ak }} --organization {{ rhc_orgid }}
+          become: true
+
+        - name: run rhc status
+          command: rhc status
+          register: rhc_status_result
+          become: true
+
+        - assert:
+            that:
+              - rhc_status_result is succeeded
+              - "'Connected to Red Hat Subscription Management' in rhc_status_result.stdout"
+              - "'Connected to Red Hat Insights' in rhc_status_result.stdout"
+              - "'The Remote Host Configuration daemon is active' in rhc_status_result.stdout"
+            fail_msg: "rhc status is not expected"
+            success_msg: "rhc status is good"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'rhel' in test_os"
 
     # case: check system reboot
     - name: check system reboot

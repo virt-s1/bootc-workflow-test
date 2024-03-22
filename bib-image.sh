@@ -30,6 +30,7 @@ case "$TEST_OS" in
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee "${LAYERED_DIR}"/rhel-9-4.repo > /dev/null
         # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
+        ADD_RHC="RUN dnf install -y rhc"
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
@@ -57,6 +58,7 @@ EOF
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="cloud-user"
         ADD_REPO=""
+        ADD_RHC=""
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
@@ -69,6 +71,7 @@ EOF
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         SSH_USER="fedora"
         ADD_REPO=""
+        ADD_RHC=""
         ;;
     *)
         redprint "Variable TEST_OS has to be defined"
@@ -101,7 +104,7 @@ esac
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/auth.json > /dev/null
 [[ $debug == 1 ]] && set -x
 greenprint "Create $TEST_OS installation Containerfile"
-sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO|" "$INSTALL_CONTAINERFILE"
+sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO\n$ADD_RHC|" "$INSTALL_CONTAINERFILE"
 tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 RUN dnf -y clean all
 COPY auth.json /etc/ostree/auth.json

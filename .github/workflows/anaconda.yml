@@ -84,7 +84,7 @@ jobs:
           pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
           tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};CERT_URL=${{ secrets.CERT_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }}"
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};CERT_URL=${{ secrets.CERT_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
           variables: "TEST_OS=rhel-9-4;FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   cs9-anaconda:
