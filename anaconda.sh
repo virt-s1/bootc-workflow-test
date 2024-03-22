@@ -82,6 +82,7 @@ case "$TEST_OS" in
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
+        ADD_RHC="RUN dnf install -y rhc"
         # The current image is built based on RHEL-9.4.0-20240130.10. It doesn't include patched anaconda. Let's use latest as workaround
         BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/"
         # BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/\$basearch/os/"
@@ -94,6 +95,7 @@ case "$TEST_OS" in
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         ADD_REPO=""
+        ADD_RHC=""
         CURRENT_COMPOSE_CS9=$(skopeo inspect "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
         BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_CS9}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="centos-stream9"
@@ -105,6 +107,7 @@ case "$TEST_OS" in
         TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
         TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
         ADD_REPO=""
+        ADD_RHC=""
         BOOT_LOCATION="https://odcs.fedoraproject.org/composes/production/latest-Fedora-ELN/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="fedora-rawhide"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
@@ -129,6 +132,7 @@ greenprint "Create $TEST_OS installation Containerfile"
 tee "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 FROM "$TIER1_IMAGE_URL"
 $ADD_REPO
+$ADD_RHC
 RUN dnf -y install python3 && \
     dnf -y clean all
 COPY auth.json /etc/ostree/auth.json

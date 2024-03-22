@@ -83,7 +83,7 @@ jobs:
           pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-replace-${{ matrix.platform }}"
           tmt_plan_regex: "${{ matrix.platform }}"
           tf_scope: private
-          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};CERT_URL=${{ secrets.CERT_URL }}"
+          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};CERT_URL=${{ secrets.CERT_URL }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
           variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};AWS_REGION=${{ secrets.AWS_REGION }}"
 
   cs9-replace:

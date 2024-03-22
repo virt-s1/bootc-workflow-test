@@ -89,6 +89,16 @@ spec:
             secretKeyRef:
               name: "bootc-workflow-test-secret"
               key: "AWS_SECRET_ACCESS_KEY"
+        - name: RHC_AK
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "RHC_AK"
+        - name: RHC_ORGID
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-secret"
+              key: "RHC_ORGID"
       script: |
         #!/usr/bin/env bash
 
@@ -141,6 +151,8 @@ spec:
           --secret GCP_SERVICE_ACCOUNT_FILE_B64="${GCP_SERVICE_ACCOUNT_FILE_B64}" \
           --secret AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
           --secret AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+          --secret RHC_AK="${RHC_AK}" \
+          --secret RHC_ORGID="${RHC_ORGID}" \
           --git-url "${GIT_URL}" \
           --git-ref "${GIT_REF}" \
           --compose "${COMPOSE}" \
