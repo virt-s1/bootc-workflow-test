@@ -92,7 +92,7 @@
       become: true
       when: "'centos-bootc-dev' not in test_image_url"
 
-    # 5 minutes reboot timeout is for bare metal test
+    # 10 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system
       reboot:
         post_reboot_delay: 60

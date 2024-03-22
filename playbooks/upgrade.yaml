@@ -29,11 +29,11 @@
       when:
         - air_gapped_dir | default('') == ""
 
-    # 5 minutes reboot timeout is for bare metal test
+    # 10 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system
       reboot:
         post_reboot_delay: 60
-        reboot_timeout: 300
+        reboot_timeout: 600
       become: true
       ignore_errors: true
 

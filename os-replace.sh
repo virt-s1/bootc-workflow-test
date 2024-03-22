@@ -50,7 +50,6 @@ yum_repos:
     enabled: true
     gpgcheck: false
 EOF
-        BARE_METAL_PARTITION="standard"
         ;;
     "centos-stream-9")
         IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
@@ -63,10 +62,6 @@ EOF
             SSH_USER="ec2-user"
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
-        BARE_METAL_PARTITION="standard"
-        if [[ "$IMAGE_NAME" == "centos-bootc-dev" ]]; then
-            BARE_METAL_PARTITION="lvm"
-        fi
         ;;
     "fedora-eln")
         IMAGE_NAME="fedora-bootc"
@@ -75,7 +70,6 @@ EOF
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
-        BARE_METAL_PARTITION="lvm"
         ;;
     *)
         redprint "Variable TEST_OS has to be defined"
@@ -98,20 +92,6 @@ fi
 VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
 TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
-
-greenprint "Configure container build arch"
-case "$ARCH" in
-    "x86_64")
-        BUILD_PLATFORM="linux/amd64"
-        ;;
-    "aarch64")
-        BUILD_PLATFORM="linux/arm64"
-        ;;
-    *)
-        redprint "Variable ARCH has to be defined"
-        exit 1
-        ;;
-esac
 
 [[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/auth.json > /dev/null
@@ -146,9 +126,9 @@ podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 greenprint "Build $TEST_OS installation container image"
 if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
-    podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+    podman build --tls-verify=false --retry=5 --retry-delay=10 --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 else
-    podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+    podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 fi
 
 greenprint "Push $TEST_OS installation container image"
@@ -190,7 +170,6 @@ greenprint "Install $TEST_OS bootc system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
     -e test_image_url="$TEST_IMAGE_URL" \
-    -e bare_metal_partition="$BARE_METAL_PARTITION" \
     playbooks/install.yaml
 
 if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" == "qemu-guest-agent" ]]; then
@@ -213,7 +192,7 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
 retry podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
