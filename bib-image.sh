@@ -155,6 +155,7 @@ case "$IMAGE_TYPE" in
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         AMI_NAME="bootc-bib-${TEST_OS}-${ARCH}-${QUAY_REPO_TAG}"
         AWS_BUCKET_NAME="bootc-bib-images"
+        sudo podman pull --tls-verify=false --quiet --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "$TEST_IMAGE_URL"
         sudo podman run \
             --rm \
             -it \
@@ -162,6 +163,7 @@ case "$IMAGE_TYPE" in
             --pull=newer \
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             quay.io/centos-bootc/bootc-image-builder:latest \
@@ -190,6 +192,7 @@ case "$IMAGE_TYPE" in
         ;;
     "qcow2")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
+        sudo podman pull --tls-verify=false --quiet --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "$TEST_IMAGE_URL"
         mkdir output
         sudo podman run \
             --rm \
@@ -199,6 +202,7 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type qcow2 \
             --target-arch "$ARCH" \
@@ -218,6 +222,7 @@ case "$IMAGE_TYPE" in
         mkdir -p output
 
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
+        sudo podman pull --tls-verify=false --quiet --creds "${QUAY_USERNAME}:${QUAY_PASSWORD}" "$TEST_IMAGE_URL"
         sudo podman run \
             --rm \
             -it \
@@ -226,6 +231,7 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type vmdk \
             --target-arch "$ARCH" \
