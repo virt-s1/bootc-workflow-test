@@ -1,5 +1,5 @@
 <job group='rhel-edge'>
-  <whiteboard>Provisioned for {{ arch }} bootc install test</whiteboard>
+  <whiteboard>bootc install test on {{ arch }} bare metal server </whiteboard>
   <recipeSet>
     <recipe kernel_options="" kernel_options_post="" ks_meta="no_autopart" role="None" whiteboard="">
       <autopick random="false"/>
@@ -11,9 +11,9 @@ user --name={{ ssh_user }} --groups=wheel --iscrypted
 sshkey --username={{ ssh_user }} "{{ lookup('ansible.builtin.file', ssh_key_pub) }}"
 zerombr
 clearpart --all --initlabel --disklabel=gpt
-{% if bare_metal_partition == "lvm" %}
-part biosboot --size=1 --fstype=biosboot
-part /boot --size=1000 --fstype=ext4 --label=boot
+{% if firmware == 'uefi' or arch == 'aarch64' %}
+part /boot/efi --size=100  --fstype=efi
+part /boot     --size=1000  --fstype=ext4 --label=boot
 part pv.01 --grow
 volgroup bootc pv.01
 logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
@@ -41,6 +41,9 @@ echo -e '{{ ssh_user }}\tALL=(ALL)\tNOPASSWD: ALL' >> /etc/sudoers
         <and>
           <arch op="=" value="{{ arch }}"/>
           <hypervisor op="=" value=""/>
+{% if firmware == 'uefi' and arch == 'x86_64' %}
+          <key_value key="NETBOOT_METHOD" op="=" value="efigrub"/>
+{% endif %}
         </and>
       </hostRequires>
       <partitions/>
