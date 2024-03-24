@@ -113,7 +113,7 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: Fedora-39
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
@@ -152,7 +152,7 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: Fedora-39
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
