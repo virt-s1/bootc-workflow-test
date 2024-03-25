@@ -22,7 +22,8 @@ systemctl enable --now cockpit.socket
 systemctl restart osbuild-composer
 composer-cli status show
 mkdir -p /etc/osbuild-composer/repositories
-tee /etc/osbuild-composer/repositories/$(echo "$TEST_OS" | sed 's/\(.*\)-\(.*\)/\1.\2/').json >/dev/null <<EOF
+# shellcheck disable=SC2001
+tee /etc/osbuild-composer/repositories/"$(echo "$TEST_OS" | sed 's/\(.*\)-\(.*\)/\1.\2/')".json >/dev/null <<EOF
 {
      "x86_64": [
         {
