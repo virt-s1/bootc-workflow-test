@@ -20,6 +20,10 @@ QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; ech
 INVENTORY_FILE="${TEMPDIR}/inventory"
 
 REPLACE_CLOUD_USER=""
+
+greenprint "Login quay.io"
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
@@ -118,9 +122,6 @@ fi
 
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
-
-greenprint "Login quay.io"
-podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 greenprint "Build $TEST_OS installation container image"
 podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
