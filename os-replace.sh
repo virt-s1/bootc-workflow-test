@@ -19,6 +19,9 @@ UPGRADE_CONTAINERFILE=${TEMPDIR}/Containerfile.upgrade
 QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')}"
 INVENTORY_FILE="${TEMPDIR}/inventory"
 
+greenprint "Login quay.io"
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 REPLACE_CLOUD_USER=""
 case "$TEST_OS" in
     "rhel-9-4")
@@ -120,9 +123,6 @@ EOF
 
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
-
-greenprint "Login quay.io"
-podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 greenprint "Build $TEST_OS installation container image"
 if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then

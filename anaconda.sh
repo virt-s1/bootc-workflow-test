@@ -73,6 +73,9 @@ GUEST_IP="192.168.100.50"
 FIRMWARE=${FIRMWARE:-"bios"}
 PARTITION=${PARTITION:-"standard"}
 
+greenprint "Login quay.io"
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 case "$TEST_OS" in
     "rhel-9-4")
         IMAGE_NAME="rhel9-rhel_bootc"
@@ -141,22 +144,11 @@ EOF
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
 
-greenprint "Login quay.io"
-podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
-
-n=0
-until [ "$n" -ge 3 ]
-do
-   podman pull "$TIER1_IMAGE_URL" && break
-   n=$((n+1))
-   sleep 10
-done
-
 greenprint "Build $TEST_OS installation container image"
-podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
+podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$INSTALL_CONTAINERFILE" .
 
 greenprint "Push $TEST_OS installation container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+retry podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "💾 Create vm qcow2 files for virt install"
 LIBVIRT_UEFI_IMAGE_PATH="/var/lib/libvirt/images/bootc-${TEST_OS}-${FIRMWARE}.qcow2"
@@ -389,9 +381,9 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
-podman push "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+retry podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
