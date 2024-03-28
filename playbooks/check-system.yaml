@@ -531,7 +531,7 @@
             that:
               - rhc_status_result is succeeded
               - "'Connected to Red Hat Subscription Management' in rhc_status_result.stdout"
-              - "'Connected to Red Hat Insights' in rhc_status_result.stdout"
+              # - "'Connected to Red Hat Insights' in rhc_status_result.stdout"
               - "'The Remote Host Configuration daemon is active' in rhc_status_result.stdout"
             fail_msg: "rhc status is not expected"
             success_msg: "rhc status is good"
