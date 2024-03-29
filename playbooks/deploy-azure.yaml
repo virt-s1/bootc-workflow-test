@@ -6,9 +6,10 @@
     test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_key_pub: ""
+    ssh_user: "cloud-user"
     inventory_file: ""
-    download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     rg_image: "bootc-images"
+    location: "eastus"
     vm_size:
       x86_64: Standard_D2ads_v5
       aarch64: Standard_D2pds_v5
@@ -17,109 +18,174 @@
     - set_fact:
         random_num: "{{ 9999 | random(start=1001) }}"
     - set_fact:
-        rg_name: "bootc-{{ random_num }}"
+        rg_name: "rg-bootc-{{ random_num }}"
+        vnet_name: "vnet-bootc-{{ random_num }}"
+        snet_name: "snet-bootc-{{ random_num }}"
+        pip_name: "pip-bootc-{{ random_num }}"
+        dns_name: "dns-bootc-{{ random_num }}"
+        nsg_name: "nsg-bootc-{{ random_num }}"
+        rule_name: "rule-bootc-{{ random_num }}"
+        nic_name: "nic-bootc-{{ random_num }}"
+        as_name: "as-bootc-{{ random_num }}"
+        vm_name: "bootc-{{ random_num }}"
+        disk_name: "disk-bootc-{{ random_num }}"
+        sa_name: "sabootc{{ random_num }}"
+    # Storage account name must be between 3 and 24 characters in length and use numbers and lower-case letters only.
 
-    - name: Read ssh_key_pub content
-      command: cat "{{ ssh_key_pub }}"
-      register: out
-
-    - set_fact:
-        ssh_pubkey_content: "{{ out.stdout }}"
-
-    - name: List images by resource group
-      azure_rm_image_info:
-        resource_group: 'bootc-images'
-        tags:
-          - project:bootc
-          - test_os:{{ test_os }}
-          - arch:{{ arch }}
-      register: result_image
-
-    - name: Image name
-      set_fact:
-        image: "{{ result_image.images[0].name }}"
-
-    - debug:
-        var: image
+    - name: Sign with azure service principle
+      shell: |
+        /usr/bin/az login \
+        --service-principal \
+        --username {{ lookup('env', 'AZURE_CLIENT_ID') }} \
+        --password {{ lookup('env', 'AZURE_SECRET') }} \
+        --tenant {{ lookup('env', 'AZURE_TENANT') }}
+      no_log: true
 
     - name: Create resource group
-      azure.azcollection.azure_rm_resourcegroup:
-        name: "{{ rg_name }}"
-        location: eastus
+      shell: |
+        az group create \
+          --name {{ rg_name }} \
+          --location {{ location }} \
+          --tags "project=bootc"
+        az group wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ rg_name }}
 
-    - name: Create virtual network
-      azure.azcollection.azure_rm_virtualnetwork:
-        resource_group: "{{ rg_name }}"
-        name: "{{ rg_name }}_vnet"
-        address_prefixes: "172.30.0.0/16"
-
-    - name: Add subnet
-      azure.azcollection.azure_rm_subnet:
-        resource_group: "{{ rg_name }}"
-        name: "{{ rg_name }}_subnet"
-        address_prefix: "172.30.30.0/24"
-        virtual_network: "{{ rg_name }}_vnet"
+    - name: Create virtual network and subnet
+      shell: |
+        az network vnet create \
+          --resource-group {{ rg_name }} \
+          --name {{vnet_name}} \
+          --address-prefix 172.30.0.0/16 \
+          --subnet-name {{ snet_name }} \
+          --subnet-prefix 172.30.30.0/24 \
+          --tags "project=bootc"
+        az network vnet wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ vnet_name }}
+        az network vnet subnet wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ snet_name }} \
+          --vnet-name {{ vnet_name }}
 
     - name: Create public IP address
-      azure.azcollection.azure_rm_publicipaddress:
-        resource_group: "{{ rg_name }}"
-        name: "{{ rg_name }}_ip"
-        allocation_method: Static
-      register: output_ip_address
+      shell: |
+        az network public-ip create \
+          --resource-group {{ rg_name }} \
+          --name {{ pip_name }} \
+          --dns-name {{ dns_name }} \
+          --sku Standard \
+          --allocation-method Static \
+          --version IPv4 \
+          --tags "project=bootc"
+        az network public-ip wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ pip_name }} \
 
-    - name: Public IP of VM
-      set_fact:
-        instance_ip: "{{ output_ip_address.state.ip_address }}"
+    - name: Create Network Security Group
+      shell: |
+        az network nsg create \
+          --resource-group {{ rg_name }} \
+          --name {{ nsg_name }} \
+          --tags "project=bootc"
+        az network nsg wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ nsg_name }} \
 
-    - name: Create Network Security Group that allows SSH
-      azure.azcollection.azure_rm_securitygroup:
-        resource_group: "{{ rg_name }}"
-        name: "{{ rg_name }}_sg"
-        rules:
-          - name: SSH
-            protocol: Tcp
-            destination_port_range: 22
-            access: Allow
-            priority: 1001
-            direction: Inbound
+    - name: Allow SSH
+      shell: |
+        az network nsg rule create \
+          --resource-group {{ rg_name }} \
+          --nsg-name {{ nsg_name }} \
+          --name {{ rule_name }} \
+          --priority 1000 \
+          --protocol tcp \
+          --destination-port-range 22 \
+          --access allow
+        az network nsg rule wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --nsg-name {{ nsg_name }} \
+          --name {{ rule_name }} \
 
     - name: Create virtual network interface card
-      azure.azcollection.azure_rm_networkinterface:
-        resource_group: "{{ rg_name }}"
-        name: "{{ rg_name }}_nic"
-        virtual_network: "{{ rg_name }}_vnet"
-        subnet: "{{ rg_name }}_subnet"
-        public_ip_name: "{{ rg_name }}_ip"
-        security_group: "{{ rg_name }}_sg"
+      shell: |
+        az network nic create \
+          --resource-group {{ rg_name }} \
+          --name {{ nic_name }} \
+          --subnet {{ snet_name }} \
+          --vnet-name {{ vnet_name }} \
+          --public-ip-address {{ pip_name }} \
+          --network-security-group {{ nsg_name }} \
+          --tags "project=bootc"
+        az network nic wait \
+          --created \
+          --resource-group {{ rg_name }} \
+          --name {{ nic_name }}
+
+    # tsv output for raw string
+    - name: Get image ID
+      shell: |
+        az image list \
+          --resource-group {{ rg_image }} \
+          --query "[?tags.project=='bootc' && tags.test_os=='{{ test_os }}' && tags.arch=='{{ arch }}']  | [0].id" \
+          --output tsv
+      register: image_id_result
+
+    - set_fact:
+        image_id: "{{ image_id_result.stdout }}"
+
+    - name: Create storage account for boot diagnose
+      shell: |
+        az storage account create \
+          --resource-group {{ rg_name }} \
+          --name {{ sa_name }} \
+          --access-tier Hot \
+          --sku Standard_LRS \
+          --kind StorageV2 \
+          --tags "project=bootc"
 
     - name: Create VM
-      azure.azcollection.azure_rm_virtualmachine:
-        resource_group: "{{ rg_name }}"
-        name: bootc-{{ test_os }}-{{ random_num }}
-        vm_size: "{{ vm_size[arch] }}"
-        priority: Spot
-        os_type: Linux
-        storage_container_name: osdisk
-        network_interface_names: "{{ rg_name }}_nic"
-        os_disk_size_gb: 64
-        boot_diagnostics:
-          enabled: yes
-          type: managed
-        image:
-          resource_group: "{{ rg_image }}"
-          name: "{{ image }}"
-        admin_username: cloud-user
-        ssh_password_enabled: false
-        ssh_public_keys:
-          - path: /home/cloud-user/.ssh/authorized_keys
-            key_data: "{{ ssh_pubkey_content }}"
-      register: test_vm
+      shell: |
+        az vm create \
+          --resource-group {{ rg_name }} \
+          --name {{ vm_name }} \
+          --nics {{ nic_name }} \
+          --os-disk-size-gb 20 \
+          --os-disk-name {{ disk_name }} \
+          --priority Spot \
+          --max-price 1 \
+          --eviction-policy Delete \
+          --size {{ vm_size[arch] }} \
+          --image {{ image_id }} \
+          --boot-diagnostics-storage {{ sa_name }} \
+          --admin-username {{ ssh_user }} \
+          --ssh-key-values {{ ssh_key_pub }} \
+          --generate-ssh-keys \
+          --tags "project=bootc" \
+          --no-wait
+        az vm wait \
+          --custom "instanceView.statuses[?code=='PowerState/running']" \
+          --resource-group {{ rg_name }} \
+          --name {{ vm_name }}
 
-    - debug:
-        var: test_vm
+    # tsv output for raw string
+    - name: Get vm ip address
+      shell: |
+        az vm list-ip-addresses \
+          --resource-group {{ rg_name }} \
+          --name {{ vm_name }} \
+          --query "[0].virtualMachine.network.publicIpAddresses[0].ipAddress" \
+          --output tsv
+      register: ip_result
 
-    - debug:
-        var: instance_ip
+    - set_fact:
+        instance_ip: "{{ ip_result.stdout }}"
 
     - name: waits until instance is reachable
       wait_for:
