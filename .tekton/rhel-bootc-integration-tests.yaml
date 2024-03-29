@@ -83,3 +83,6 @@ spec:
           value: $(params.AZURE_CLIENT_ID)
         - name: AZURE_TENANT
           value: $(params.AZURE_TENANT)
+      # default to 60m, extend to 90m
+      # https://tekton.dev/docs/pipelines/pipelines/#configuring-the-failure-timeout
+      timeout: "1h30m"
