@@ -19,7 +19,9 @@
     - name: Get CentOS-Stream-GenericCloud image filename
       block:
         - name: Get CentOS-Stream-GenericCloud image filename
-          shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
+          # shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
+          # workaround issue https://issues.redhat.com/browse/RHEL-30952
+          shell: curl -s https://composes.stream.centos.org/production/CentOS-Stream-9-20240325.0/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
           register: out
 
         - set_fact:
@@ -42,7 +44,9 @@
 
     - name: Download CentOS-Stream-GenericCloud image
       uri:
-        url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
+        # url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
+        # workaround issue https://issues.redhat.com/browse/RHEL-30952
+        url: "https://composes.stream.centos.org/production/CentOS-Stream-9-20240325.0/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
         dest: "{{ image_path }}"
         creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
