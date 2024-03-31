@@ -233,8 +233,6 @@ case "$IMAGE_TYPE" in
             "$TEST_IMAGE_URL"
 
         greenprint "Deploy $IMAGE_TYPE instance"
-        sudo curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
-
         DATACENTER_70="Datacenter7.0"
         DATASTORE_70="datastore-80"
         DATACENTER_70_POOL="/Datacenter7.0/host/Automation/Resources"

@@ -13,10 +13,8 @@ prepare:
       - unzip
   - how: shell
     script: |
-      pip install boto3 botocore openstacksdk
-      ansible-galaxy collection install openstack.cloud community.general community.libvirt amazon.aws ansible.posix
-  - how: shell
-    script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
+      pip install openstacksdk
+      ansible-galaxy collection install openstack.cloud community.general community.libvirt ansible.posix
   - how: shell
     script: curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors && update-ca-trust
 execute:
@@ -57,6 +55,9 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
+  prepare+:
+    - how: shell
+      script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
 
 /azure:
   summary: Run os-replace test on azure

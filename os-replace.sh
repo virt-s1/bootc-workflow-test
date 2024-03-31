@@ -80,6 +80,20 @@ EOF
         ;;
 esac
 
+greenprint "Configure container build arch"
+case "$ARCH" in
+    "x86_64")
+        BUILD_PLATFORM="linux/amd64"
+        ;;
+    "aarch64")
+        BUILD_PLATFORM="linux/arm64"
+        ;;
+    *)
+        redprint "Variable ARCH has to be defined"
+        exit 1
+        ;;
+esac
+
 if [[ ${AIR_GAPPED-} -eq 1 ]];then
     if [[ ${PLATFORM} == "libvirt" ]]; then
         AIR_GAPPED_DIR="$TEMPDIR"/virtiofs
@@ -128,9 +142,9 @@ cat "$INSTALL_CONTAINERFILE"
 
 greenprint "Build $TEST_OS installation container image"
 if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
-    podman build --tls-verify=false --retry=5 --retry-delay=10 --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+    podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 else
-    podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+    podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 fi
 
 greenprint "Push $TEST_OS installation container image"
@@ -194,7 +208,7 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
 retry podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
