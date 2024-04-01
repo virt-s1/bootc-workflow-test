@@ -191,7 +191,7 @@ case "$IMAGE_TYPE" in
         ;;
     "qcow2")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
-        mkdir output
+        mkdir -p output
         sudo podman run \
             --rm \
             -it \
@@ -211,6 +211,7 @@ case "$IMAGE_TYPE" in
         ansible-playbook -v \
             -i "$INVENTORY_FILE" \
             -e ssh_key_pub="$SSH_KEY_PUB" \
+            -e ssh_user="$SSH_USER" \
             -e inventory_file="$INVENTORY_FILE" \
             -e bib="true" \
             "playbooks/deploy-libvirt.yaml"

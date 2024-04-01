@@ -85,11 +85,9 @@ execute:
   prepare+:
     - how: install
       package:
-        - python3-libvirt
-        - python3-lxml
         - qemu-kvm
         - libvirt
-        - xorriso
+        - virt-install
   adjust+:
     - when: arch == ppc64le
       enabled: false
