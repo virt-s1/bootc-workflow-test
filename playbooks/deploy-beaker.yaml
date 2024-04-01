@@ -23,7 +23,7 @@
       register: distro_result_rhel
       when: "'rhel' in test_os"
 
-    - name: "get latest {{ beaker_family[os] }} distro"
+    - name: "get latest {{ beaker_family[test_os] }} distro"
       command: bkr distros-list --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --limit 1 --format json
       register: distro_result_other
       when: "'rhel' not in test_os"

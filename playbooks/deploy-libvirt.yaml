@@ -1,16 +1,19 @@
 ---
 - hosts: cloud
-  gather_facts: false
   become: false
   vars:
     test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_key_pub: ""
+    ssh_user: "cloud-user"
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     instance_name: "bootc-{{ test_os }}"
     image_path: "/var/lib/libvirt/images"
     bib: "false"
+    os_variant:
+      centos-stream-9: centos-stream9
+      rhel-9-4: rhel9-unknown
 
   tasks:
     - set_fact:
@@ -19,13 +22,12 @@
     - name: Get CentOS-Stream-GenericCloud image filename
       block:
         - name: Get CentOS-Stream-GenericCloud image filename
-          # shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
-          # workaround issue https://issues.redhat.com/browse/RHEL-30952
-          shell: curl -s https://composes.stream.centos.org/production/CentOS-Stream-9-20240325.0/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
+          shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
           register: out
 
         - set_fact:
-            rhel_guest_image_fname: "{{ out.stdout }}"
+            download_image_name: "{{ out.stdout }}"
+            rhel_guest_image_fname: "{{ instance_name }}.qcow2"
       when:
         - "'centos' in test_os"
         - bib == "false"
@@ -37,29 +39,27 @@
           register: out
 
         - set_fact:
-            rhel_guest_image_fname: "{{ out.stdout }}"
+            download_image_name: "{{ out.stdout }}"
+            rhel_guest_image_fname: "{{ instance_name }}.qcow2"
       when:
         - "'rhel' in test_os"
         - bib == "false"
 
     - name: Download CentOS-Stream-GenericCloud image
-      uri:
-        # url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
-        # workaround issue https://issues.redhat.com/browse/RHEL-30952
-        url: "https://composes.stream.centos.org/production/CentOS-Stream-9-20240325.0/compose/BaseOS/x86_64/images/{{ rhel_guest_image_fname }}"
-        dest: "{{ image_path }}"
-        creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
+      get_url:
+        url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ download_image_name }}"
+        dest: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
+      become: true
       when:
         - "'centos' in test_os"
         - bib == "false"
-
     - name: Download rhel-guest-image
-      uri:
-        url: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/{{ arch }}/images/{{ rhel_guest_image_fname }}"
-        dest: "{{ image_path }}"
-        creates: "{{ image_path }}/{{ rhel_guest_image_fname }}"
+      get_url:
+        url: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/{{ arch }}/images/{{ download_image_name }}"
+        dest: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
+      become: true
       when:
         - "'rhel' in test_os"
         - bib == "false"
@@ -68,44 +68,75 @@
         rhel_guest_image_fname: "disk.qcow2"
       when: bib == "true"
 
-    - name: Read ssh_key_pub content
-      command: cat "{{ ssh_key_pub }}"
-      register: out
-
-    - set_fact:
-        ssh_pubkey_content: "{{ out.stdout }}"
-
     - name: Start libvirtd service
       command: systemctl start libvirtd.service
       become: true
 
-    - name: Generate libvirt_nocloud.sh
+    - name: Generate user-data and meta-data
       template:
-        src: libvirt_nocloud.sh.j2
-        dest: "{{ playbook_dir }}/libvirt_nocloud.sh"
+        src: libvirt-{{ item }}.j2
+        dest: "{{ playbook_dir }}/libvirt-{{ item }}"
+      loop:
+        - user-data
+        - meta-data
+
+    - name: Generate virt-install script
+      template:
+        src: virt-install.bash.j2
+        dest: "{{ playbook_dir }}/virt-install.bash"
         mode: 0755
 
-    - name: Generate nocloud.iso
-      command: "{{ playbook_dir }}/libvirt_nocloud.sh"
+    - name: Define and start VM
+      command: "{{ playbook_dir }}/virt-install.bash"
       become: true
 
-    - name: Define a VM
-      community.libvirt.virt:
-        command: define
-        xml: "{{ lookup('template', 'libvirt_vm_template.xml.j2') }}"
+    - name: Get VM IP address
+      shell:
+        virsh domifaddr {{ instance_name }} | grep -oP '(?:\d+\.){3}\d+'
+      register: result
+      until: result.stdout != ""
+      retries: 30
+      delay: 10
+      become: true
+
+    - set_fact:
+        instance_ip: "{{ result.stdout }}"
+
+    - name: Waits until instance is reachable
+      wait_for:
+        host: "{{ instance_ip }}"
+        port: 22
+        search_regex: OpenSSH
+        delay: 10
+      retries: 30
+      register: result_ssh_check
+      until: result_ssh_check is success
+
+    - name: add guest ip into host guest group
+      add_host:
+        name: "{{ instance_ip  }}"
+        groups: guest
+
+    - name: ensure cloud-init has finished
+      raw: test -f /var/lib/cloud/instance/boot-finished
+      retries: 60
+      register: cloud_init_check
+      changed_when: false
+      until: cloud_init_check is success
+      delegate_to: "{{ instance_ip }}"
+
+    - name: Wait 10 seconds before VM restart
+      wait_for:
+        timeout: 10
+
+    - name: Stop and start vm
+      shell: |
+        virsh destroy {{ instance_name }}
+        virsh start {{ instance_name }}
       become: true
 
     - name: Get VM xml
-      community.libvirt.virt:
-        command: get_xml
-        name: "{{ instance_name }}"
-      become: true
-
-    - name: Start a VM
-      community.libvirt.virt:
-        name: "{{ instance_name }}"
-        state: running
-        xml: "{{ lookup('template', 'libvirt_vm_template.xml.j2') }}"
+      command: virsh dumpxml {{ instance_name }}
       become: true
 
     - name: Get VM IP address
@@ -152,8 +183,8 @@
       community.general.ini_file:
         path: "{{ inventory_file }}"
         section: cloud:vars
-        option: random_num
-        value: "{{ random_num }}"
+        option: rhel_guest_image_fname
+        value: "{{ rhel_guest_image_fname }}"
         no_extra_spaces: true
 
     - name: Write instance name to inventory file

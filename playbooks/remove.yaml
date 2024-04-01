@@ -73,6 +73,19 @@
           when: ami_id != ""
       when: platform == "aws"
 
+    - name: Destroy and undefine libvirt vm
+      block:
+        - name: "Destroy vm"
+          command: virsh destroy {{ instance_name }}
+          become: true
+        - name: "Undefine vm"
+          command: virsh undefine {{ instance_name }}
+          become: true
+        - name: "Delete disk file"
+          command: virsh vol-delete --pool images "{{ rhel_guest_image_fname }}"
+          become: true
+      when: platform == "libvirt"
+
     - name: Cancel beaker job
       block:
         - name: "cancel beaker job {{ job_id }}"

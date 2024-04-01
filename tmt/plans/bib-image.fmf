@@ -14,7 +14,7 @@ prepare:
   - how: shell
     script: |
       pip install openstacksdk
-      ansible-galaxy collection install openstack.cloud community.general community.libvirt ansible.posix
+      ansible-galaxy collection install openstack.cloud community.general ansible.posix
 execute:
   how: tmt
 
@@ -42,11 +42,9 @@ execute:
   prepare+:
     - how: install
       package:
-        - python3-libvirt
-        - python3-lxml
         - qemu-kvm
         - libvirt
-        - xorriso
+        - virt-install
   adjust+:
     - when: arch == ppc64le
       enabled: false

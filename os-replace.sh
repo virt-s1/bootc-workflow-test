@@ -188,10 +188,6 @@ ansible-playbook -v \
     -e test_image_url="$TEST_IMAGE_URL" \
     playbooks/install.yaml
 
-if [[ "$PLATFORM" == "libvirt" ]] && [[ "$LAYERED_IMAGE" == "qemu-guest-agent" ]]; then
-    virsh guestinfo bootc-"$TEST_OS"
-fi
-
 greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
