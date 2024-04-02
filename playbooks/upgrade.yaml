@@ -1,6 +1,8 @@
 ---
 - hosts: guest
   become: false
+  vars:
+    bootc_image: ""
 
   tasks:
     - name: Air-gapped upgrade
@@ -23,11 +25,22 @@
       when:
         - air_gapped_dir | default('') != ""
 
+    - name: determine installed image from localhost or quay.io
+      shell: bootc status --json | jq -r '.status.booted.image.image.image'
+      become: true
+      register: result_bootc_status
+
+    - name: switch to quay.io for upgrade
+      command: bootc switch {{ bootc_image }}
+      become: true
+      when: "'localhost' in result_bootc_status.stdout"
+
     - name: bootc upgrade
       command: bootc upgrade
       become: true
       when:
         - air_gapped_dir | default('') == ""
+        - "'localhost' not in result_bootc_status.stdout"
 
     # 10 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system
@@ -40,3 +53,7 @@
     - name: Wait for connection to become reachable/usable
       wait_for_connection:
         delay: 30
+
+    - name: bootc booted status
+      command: bootc status --booted
+      become: true
