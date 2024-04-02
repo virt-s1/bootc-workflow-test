@@ -22,7 +22,7 @@ INVENTORY_FILE="${TEMPDIR}/inventory"
 REPLACE_CLOUD_USER=""
 
 greenprint "Login quay.io"
-podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+sudo podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 case "$TEST_OS" in
     "rhel-9-4")
@@ -87,7 +87,8 @@ VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | j
 TEST_IMAGE_NAME="${IMAGE_NAME}-test"
 # bootc-image-builder does not support private image repo,
 # use temporary public image repo as workaround
-TEST_IMAGE_URL="quay.io/rhel-edge/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+LOCAL_IMAGE_URL="localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Configure container build arch"
 case "$ARCH" in
@@ -124,10 +125,10 @@ greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
 
 greenprint "Build $TEST_OS installation container image"
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
 
 greenprint "Push $TEST_OS installation container image"
-podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+sudo podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Prepare inventory file"
 tee -a "$INVENTORY_FILE" > /dev/null << EOF
@@ -163,6 +164,7 @@ case "$IMAGE_TYPE" in
             --pull=newer \
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
             quay.io/centos-bootc/bootc-image-builder:latest \
@@ -171,7 +173,8 @@ case "$IMAGE_TYPE" in
             --aws-ami-name "$AMI_NAME" \
             --aws-bucket "$AWS_BUCKET_NAME" \
             --aws-region "$AWS_REGION" \
-            "$TEST_IMAGE_URL"
+            --local \
+            "$LOCAL_IMAGE_URL"
 
         greenprint "Get uploaded AMI ID and snapshot ID"
         AMI_ID=$(
@@ -200,10 +203,12 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type qcow2 \
             --target-arch "$ARCH" \
-            "$TEST_IMAGE_URL"
+            --local \
+            "$LOCAL_IMAGE_URL"
 
         sudo mv output/qcow2/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
 
@@ -228,10 +233,12 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
             --type vmdk \
             --target-arch "$ARCH" \
-            "$TEST_IMAGE_URL"
+            --local \
+            "$LOCAL_IMAGE_URL"
 
         greenprint "Deploy $IMAGE_TYPE instance"
         DATACENTER_70="Datacenter7.0"
@@ -364,13 +371,14 @@ RUN dnf -y install wget && \
 EOF
 
 greenprint "Build $TEST_OS upgrade container image"
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
+sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" -f "$UPGRADE_CONTAINERFILE" .
 greenprint "Push $TEST_OS upgrade container image"
-podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
+sudo podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
 
 greenprint "Upgrade $TEST_OS system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e bootc_image="$TEST_IMAGE_URL" \
     playbooks/upgrade.yaml
 
 greenprint "Run ostree checking test after upgrade on $PLATFORM instance"

@@ -82,6 +82,7 @@
         - name: failed count + 1
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'localhost' not in installed_image"
 
     # case: check ostree-remount service status
     - name: check ostree-remount service status

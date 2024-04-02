@@ -34,6 +34,11 @@
           register: result_rollback_image_digest
           become: true
 
+        - name: determine installed image from localhost or quay.io
+          shell: bootc status --json | jq -r '.status.booted.image.image.image'
+          become: true
+          register: result_bootc_status
+
         - name: check booted cachedUpdate and rollback image digest
           block:
             - assert:
@@ -50,6 +55,7 @@
                 failed_counter: "{{ failed_counter | int + 1 }}"
           when:
             - air_gapped_dir | default('') == ""
+            - "'localhost' not in result_bootc_status.stdout"
 
         - name: check installed package
           shell: rpm -qa | sort
