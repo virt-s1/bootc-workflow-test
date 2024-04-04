@@ -1,6 +1,5 @@
 ---
 - hosts: cloud
-  gather_facts: false
   become: false
 
   tasks:
@@ -78,9 +77,14 @@
         - name: "Destroy vm"
           command: virsh destroy {{ instance_name }}
           become: true
-        - name: "Undefine vm"
+        - name: "Undefine vm on x86_64"
           command: virsh undefine {{ instance_name }}
           become: true
+          when: ansible_facts['architecture'] == "x86_64"
+        - name: "Undefine vm on aarch64"
+          command: virsh undefine {{ instance_name }} --nvram
+          become: true
+          when: ansible_facts['architecture'] == "aarch64"
         - name: "Delete disk file"
           command: virsh vol-delete --pool images "{{ rhel_guest_image_fname }}"
           become: true
