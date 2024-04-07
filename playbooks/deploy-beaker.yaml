@@ -19,12 +19,12 @@
 
   tasks:
     - name: "get latest {{ beaker_family[test_os] }} distro"
-      command: bkr distros-list --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --tag CTS_NIGHTLY --limit 1 --format json
+      command: bkr distros-list --insecure --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --tag CTS_NIGHTLY --limit 1 --format json
       register: distro_result_rhel
       when: "'rhel' in test_os"
 
     - name: "get latest {{ beaker_family[test_os] }} distro"
-      command: bkr distros-list --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --limit 1 --format json
+      command: bkr distros-list --insecure --family {{ beaker_family[test_os] }} --name {{ beaker_compose[test_os] }}% --limit 1 --format json
       register: distro_result_other
       when: "'rhel' not in test_os"
 
@@ -48,7 +48,7 @@
         dest: beaker-job.xml
 
     - name: submit beaker job
-      command: bkr job-submit beaker-job.xml
+      command: bkr job-submit --insecure beaker-job.xml
       register: job_result
 
     - name: got job id
@@ -56,7 +56,7 @@
         job_id: "{{ job_result.stdout.split(\"'\")[1] }}"
 
     - name: wait for job complete
-      command: bkr job-results --prettyxml {{ job_id }}
+      command: bkr job-results --insecure --prettyxml {{ job_id }}
       register: job_finished
       retries: 50
       delay: 60
