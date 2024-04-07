@@ -23,7 +23,7 @@
     - name: Get CentOS-Stream-GenericCloud image filename
       block:
         - name: Get CentOS-Stream-GenericCloud image filename
-          shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-[^"]+.qcow2(?=")'
+          shell: curl -s https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/ | grep -oP '(?<=href=")CentOS-Stream-GenericCloud-(9|10)-[^"]+.qcow2(?=")'
           register: out
 
         - set_fact:
