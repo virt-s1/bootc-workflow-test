@@ -95,7 +95,7 @@
     - name: Cancel beaker job
       block:
         - name: "cancel beaker job {{ job_id }}"
-          command: bkr job-cancel "{{ job_id }}"
+          command: bkr job-cancel --insecure "{{ job_id }}"
       when: platform == "beaker"
 
     - name: Remove Azure resource group
