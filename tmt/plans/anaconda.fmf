@@ -23,8 +23,7 @@ prepare:
       - libvirt
       - xorriso
   - how: shell
-    script: |
-      ansible-galaxy collection install community.general ansible.posix
+    script: ansible-galaxy collection install https://ansible-collection.s3.amazonaws.com/ansible-posix-1.5.4.tar.gz https://ansible-collection.s3.amazonaws.com/community-general-8.5.0.tar.gz
   - how: shell
     script: curl -kLO ${CERT_URL}/certs/Current-IT-Root-CAs.pem --output-dir /etc/pki/ca-trust/source/anchors && update-ca-trust
 execute:

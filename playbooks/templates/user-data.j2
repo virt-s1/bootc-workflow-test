@@ -1,12 +1,14 @@
 #cloud-config
 users:
   - default
+{% if platform == 'libvirt' %}
   - name: {{ ssh_user }}
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: sudo, wheel
     lock_passwd: true
     ssh_authorized_keys:
       - {{ lookup('ansible.builtin.file', ssh_key_pub) }}
+{% endif %}
 {% if bib == 'false' and test_os.startswith('rhel') %}
 yum_repos:
   rhel-94-baseos:
@@ -19,4 +21,9 @@ yum_repos:
     baseurl: http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/AppStream/$basearch/os/
     enabled: true
     gpgcheck: false
+{% endif %}
+{% if platform == 'openstack' %}
+packages:
+    - python3
+    - python3-dnf
 {% endif %}
