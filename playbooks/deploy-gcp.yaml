@@ -39,21 +39,41 @@
 
     - name: Create gcp instance
       command:
-        "/usr/bin/gcloud compute instances create {{ instance_name }} \
-        --zone=us-central1-a \
-        --machine-type={{ flavor[arch] }} \
-        --boot-disk-auto-delete \
-        --boot-disk-size=80GB \
-        --metadata-from-file=ssh-keys={{ ssh_key_pub }}.gcp_key \
-        --metadata=block-project-ssh-keys=TRUE \
-        --provisioning-model=SPOT \
-        {{ image_args }} \
-        --project={{ lookup('env', 'GCP_PROJECT') }} \
-        --format=json"
-      register: result_instance
+        /usr/bin/gcloud compute instances create {{ instance_name }} \
+          --zone=us-central1-a \
+          --machine-type={{ flavor[arch] }} \
+          --boot-disk-auto-delete \
+          --boot-disk-size=80GB \
+          --metadata-from-file=ssh-keys={{ ssh_key_pub }}.gcp_key \
+          --metadata=block-project-ssh-keys=TRUE \
+          --provisioning-model=SPOT \
+          {{ image_args }} \
+          --project={{ lookup('env', 'GCP_PROJECT') }}
+
+    - name: Makre sure instance is running
+      shell: |
+        /usr/bin/gcloud compute instances list \
+          --project={{ lookup('env', 'GCP_PROJECT') }} \
+          --filter="name={{ instance_name }}" \
+          --format json | jq -r '.[0].status'
+      register: instance_status_result
+      retries: 20
+      until: instance_status_result.stdout == "RUNNING"
+
+    - name: Makre sure instance is having ip address
+      shell: |
+        /usr/bin/gcloud compute instances list \
+          --project={{ lookup('env', 'GCP_PROJECT') }} \
+          --filter="name={{ instance_name }}" \
+          --format json | jq -r '.[0].networkInterfaces[0].accessConfigs[0].natIP'
+      register: instance_ip_result
+      retries: 20
+      until: instance_ip_result.stdout != ""
 
     - set_fact:
-        instance_ip: "{{ result_instance.stdout | from_json | json_query('[0].networkInterfaces[0].accessConfigs[0].natIP') }}"
+        instance_ip: "{{ instance_ip_result.stdout }}"
+      when:
+        - instance_ip_result is succeeded
 
     - name: Waits until instance is reachable
       wait_for:
