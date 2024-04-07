@@ -5,12 +5,14 @@
   vars:
     test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
+    platform: "{{ lookup('env', 'PLATFORM') | default('openstack', true) }}"
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     images:
       rhel-9-4: RHEL-9.4.0-x86_64-nightly-latest
       centos-stream-9: CentOS-Stream-9-latest
+    bib: "false"
 
   tasks:
     - set_fact:
@@ -19,87 +21,65 @@
         instance_name: "bootc-openstack-{{ test_os }}-{{ random_num }}"
 
     - name: create a new openstack keypair
-      openstack.cloud.keypair:
-        state: present
-        name: "kp-bootc-{{ random_num }}"
-        public_key_file: "{{ ssh_key_pub }}"
+      command:
+        openstack --insecure keypair create \
+          --public-key {{ ssh_key_pub }} \
+          "kp-bootc-{{ random_num }}"
 
     - name: create security group
-      openstack.cloud.security_group:
-        name: "sg-bootc-{{ random_num }}"
-        state: present
-        description: "security group for bootc test on {{ test_os }}"
+      command:
+        openstack --insecure security group create \
+          --description "security group for bootc test on {{ test_os }}" \
+          "sg-bootc-{{ random_num }}"
 
     - name: set ssh rule for security group
-      openstack.cloud.security_group_rule:
-        security_group: "sg-bootc-{{ random_num }}"
-        protocol: tcp
-        port_range_min: 22
-        port_range_max: 22
-        remote_ip_prefix: 0.0.0.0/0
+      command:
+        openstack --insecure security group rule create \
+          --remote-ip 0.0.0.0/0 \
+          --protocol tcp \
+          --dst-port 22 \
+          "sg-bootc-{{ random_num }}"
+
+    - name: Generate user-data
+      template:
+        src: user-data.j2
+        dest: "{{ playbook_dir }}/openstack-user-data"
 
     - name: Deploy openstack instance
-      openstack.cloud.server:
-        name: "{{ instance_name }}"
-        image: "{{ images[test_os] }}"
-        flavor: "ci.standard.small"
-        network: "shared_net_9"
-        key_name: "kp-bootc-{{ random_num }}"
-        security_groups: "sg-bootc-{{ random_num }}"
-        auto_ip: true
-        config_drive: true
-        wait: true
-        timeout: 600
-        userdata: |
-          #cloud-config
-          packages:
-            - python3
-            - python3-dnf
-      when: "'centos' in test_os"
-
-    - name: Deploy RHEL openstack instance
-      openstack.cloud.server:
-        name: "{{ instance_name }}"
-        image: "{{ images[test_os] }}"
-        flavor: "ci.standard.small"
-        network: "shared_net_9"
-        key_name: "kp-bootc-{{ random_num }}"
-        security_groups: "sg-bootc-{{ random_num }}"
-        auto_ip: true
-        config_drive: true
-        wait: true
-        timeout: 600
-        userdata: |
-          #cloud-config
-          yum_repos:
-            baseos:
-              name: rhel-baseos
-              baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/x86_64/os/"
-              enabled: true
-              gpgcheck: false
-              sslverify: false
-            appstream:
-              name: rhel-appstream
-              baseurl: "http://{{ download_node }}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/AppStream/x86_64/os/"
-              enabled: true
-              gpgcheck: false
-              sslverify: false
-          packages:
-            - python3
-            - python3-dnf
-      when: "'rhel' in test_os"
+      command:
+        openstack --insecure server create \
+          --flavor "ci.standard.small" \
+          --image "{{ images[test_os] }}" \
+          --network "shared_net_9" \
+          --key-name "kp-bootc-{{ random_num }}" \
+          --security-group "sg-bootc-{{ random_num }}" \
+          --user-data "{{ playbook_dir }}/openstack-user-data" \
+          --use-config-drive \
+          --wait \
+          {{ instance_name }}
 
     - name: Makre sure instance is running
-      openstack.cloud.server_info:
-        server: "{{ instance_name }}"
+      shell: |
+        openstack --insecure server show \
+          {{ instance_name }} \
+          --format json | jq -r '.vm_state'
       register: instance_status_result
       retries: 20
-      until: instance_status_result.servers[0].vm_state == "active" and instance_status_result.servers[0].access_ipv4 != ""
+      until: instance_status_result.stdout == "active"
+
+    - name: Makre sure instance is having ip address
+      shell: |
+        openstack --insecure server show \
+          {{ instance_name }} \
+          --format json | jq -r '.addresses.shared_net_9[0]'
+      register: instance_ip_result
+      retries: 20
+      until: instance_ip_result.stdout != ""
 
     - set_fact:
-        instance_ip: "{{ instance_status_result.servers[0].addresses.shared_net_9[0].addr }}"
+        instance_ip: "{{ instance_ip_result.stdout }}"
       when:
-        - instance_status_result is succeeded
+        - instance_ip_result is succeeded
 
     - name: Waits until instance is reachable
       wait_for:

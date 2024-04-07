@@ -6,6 +6,7 @@
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_key_pub: ""
     ssh_user: "cloud-user"
+    platform: "{{ lookup('env', 'PLATFORM') | default('libvirt', true) }}"
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     instance_name: "bootc-{{ test_os }}"
@@ -74,7 +75,7 @@
 
     - name: Generate user-data and meta-data
       template:
-        src: libvirt-{{ item }}.j2
+        src: "{{ item }}.j2"
         dest: "{{ playbook_dir }}/libvirt-{{ item }}"
       loop:
         - user-data
