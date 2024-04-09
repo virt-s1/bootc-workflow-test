@@ -7,12 +7,14 @@
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_key_pub: ""
     ssh_user: "cloud-user"
+    platform: "{{ lookup('env', 'PLATFORM') | default('azure', true) }}"
     inventory_file: ""
     rg_image: "bootc-images"
     location: "eastus"
     vm_size:
       x86_64: Standard_D2ads_v5
       aarch64: Standard_D2pds_v5
+    bib: "false"
 
   tasks:
     - set_fact:
@@ -150,6 +152,11 @@
           --kind StorageV2 \
           --tags "project=bootc"
 
+    - name: Generate user-data
+      template:
+        src: user-data.j2
+        dest: "{{ playbook_dir }}/azure-user-data"
+
     - name: Create VM
       shell: |
         az vm create \
@@ -164,8 +171,7 @@
           --size {{ vm_size[arch] }} \
           --image {{ image_id }} \
           --boot-diagnostics-storage {{ sa_name }} \
-          --admin-username {{ ssh_user }} \
-          --ssh-key-values {{ ssh_key_pub }} \
+          --user-data "{{ playbook_dir }}/azure-user-data" \
           --generate-ssh-keys \
           --tags "project=bootc" \
           --no-wait
