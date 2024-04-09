@@ -1,7 +1,7 @@
 #cloud-config
 users:
   - default
-{% if platform == 'libvirt' %}
+{% if platform == 'libvirt' or platform == 'azure' %}
   - name: {{ ssh_user }}
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: sudo, wheel
@@ -9,7 +9,7 @@ users:
     ssh_authorized_keys:
       - {{ lookup('ansible.builtin.file', ssh_key_pub) }}
 {% endif %}
-{% if bib == 'false' and test_os.startswith('rhel') %}
+{% if bib == 'false' and (platform == 'openstack' or platform == 'libvirt') and test_os.startswith('rhel') %}
 yum_repos:
   rhel-94-baseos:
     name: rhel-94-baseos
