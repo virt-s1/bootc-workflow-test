@@ -87,7 +87,7 @@ case "$TEST_OS" in
         ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
         ADD_RHC="RUN dnf install -y rhc"
         # The current image is built based on RHEL-9.4.0-20240130.10. It doesn't include patched anaconda. Let's use latest as workaround
-        BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/"
+        BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/"
         # BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/\$basearch/os/"
         OS_VARIANT="rhel9-unknown"
         BOOT_ARGS="uefi"
