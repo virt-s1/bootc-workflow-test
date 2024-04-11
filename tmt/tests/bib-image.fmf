@@ -1,4 +1,4 @@
 test: ./test.sh
-duration: 60m
+duration: 90m
 environment:
   TEST_CASE: bib-image

@@ -23,16 +23,13 @@ greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 REPLACE_CLOUD_USER=""
-case "$TEST_OS" in
-    "rhel-9-4")
-        IMAGE_NAME="rhel9-rhel_bootc"
-        TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
+case "$REDHAT_ID" in
+    "rhel")
+        # work with old TEST_OS variable value rhel-9-x
+        TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/\./-/')
         SSH_USER="cloud-user"
-        CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee "${LAYERED_DIR}"/rhel-9-4.repo > /dev/null
-        # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
-        ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
+        ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
         ADD_RHC="RUN dnf install -y rhc"
         if [[ "$PLATFORM" == "aws" ]]; then
             SSH_USER="ec2-user"
@@ -42,22 +39,21 @@ case "$TEST_OS" in
         tee -a "playbooks/user-data" > /dev/null << EOF
 #cloud-config
 yum_repos:
-  rhel-94-baseos:
-    name: rhel-94-baseos
-    baseurl: http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/\$basearch/os/
+  rhel-9y-baseos:
+    name: rhel-9y-baseos
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_ID}/compose/BaseOS/\$basearch/os/
     enabled: true
     gpgcheck: false
-  rhel-94-appstream:
-    name: rhel-94-appstream
-    baseurl: http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/AppStream/\$basearch/os/
+  rhel-9y-appstream:
+    name: rhel-9y-appstream
+    baseurl: http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_ID}/compose/AppStream/\$basearch/os/
     enabled: true
     gpgcheck: false
 EOF
         ;;
-    "centos-stream-9")
-        IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
-        TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
+    "centos")
+        # work with old TEST_OS variable value centos-stream-9
+        TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/-/-stream-/')
         SSH_USER="cloud-user"
         ADD_REPO=""
         ADD_RHC=""
@@ -66,16 +62,13 @@ EOF
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
         ;;
-    "fedora-eln")
-        IMAGE_NAME="fedora-bootc"
-        TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
+    "fedora")
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
         ;;
     *)
-        redprint "Variable TEST_OS has to be defined"
+        redprint "Variable TIER1_IMAGE_URL is not supported"
         exit 1
         ;;
 esac
@@ -106,8 +99,7 @@ else
     AIR_GAPPED_DIR=""
 fi
 
-VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
-TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
+TEST_IMAGE_NAME="bootc-workflow-test"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 [[ $- =~ x ]] && debug=1 && set +x
@@ -175,6 +167,7 @@ export ANSIBLE_CONFIG="${PWD}/playbooks/ansible.cfg"
 greenprint "Deploy $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e ssh_user="$SSH_USER" \
     -e ssh_key_pub="$SSH_KEY_PUB" \
     -e inventory_file="$INVENTORY_FILE" \
@@ -185,15 +178,17 @@ ansible-playbook -v \
 greenprint "Install $TEST_OS bootc system"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e test_image_url="$TEST_IMAGE_URL" \
     playbooks/install.yaml
 
 greenprint "Run ostree checking test on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e bootc_image="$TEST_IMAGE_URL" \
     -e layered_image="$LAYERED_IMAGE" \
-    -e image_label_version_id="$VERSION_ID" \
+    -e image_label_version_id="$REDHAT_VERSION_ID" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -224,8 +219,9 @@ ansible-playbook -v \
 greenprint "Run ostree checking test after upgrade on $PLATFORM instance"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e bootc_image="$BOOTC_IMAGE" \
-    -e image_label_version_id="$VERSION_ID" \
+    -e image_label_version_id="$REDHAT_VERSION_ID" \
     -e upgrade="true" \
     playbooks/check-system.yaml
 
@@ -242,7 +238,7 @@ ansible-playbook -v \
     playbooks/remove.yaml
 
 greenprint "Clean up"
-rm -rf auth.json rhel-9-4.repo
+rm -rf auth.json "${LAYERED_DIR}/rhel-9-y.repo"
 unset ANSIBLE_CONFIG
 
 greenprint "🎉 All tests passed."

@@ -71,7 +71,7 @@
               shell: |
                 aws ec2 delete-snapshot \
                   --snapshot-id "{{ snapshot_result.stdout }}"
-          when: ami_id != ""
+          when: deploy_by_bib == "true"
       when: platform == "aws"
 
     - name: Destroy and undefine libvirt vm

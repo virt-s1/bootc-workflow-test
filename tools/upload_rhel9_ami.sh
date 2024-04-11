@@ -1,14 +1,16 @@
 #!/bin/bash
 set -euox pipefail
 
-TEST_OS=rhel-9-4
-
 # Set up temporary files.
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
 
 UNIQUE_STRING=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
-IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/${ARCH}/images"
+if [[ "$TEST_OS" == "rhel-9-4" ]]; then
+    IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/${ARCH}/images"
+elif [[ "$TEST_OS" == "rhel-9-5" ]]; then
+    IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/BaseOS/${ARCH}/images"
+fi
 
 IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">rhel-ec2-.*.${ARCH}.raw.xz<" | tr -d '><')
 curl -s -O --output-dir "$TEMPDIR" "${IMAGE_URL}/${IMAGE_FILE}"
@@ -119,38 +121,10 @@ aws ec2 create-tags \
 # Remove bucket content and bucket itself quietly
 aws s3 rb "$BUCKET_URL" --force > /dev/null
 
-# Install yq
-sudo wget -q https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq
-
-# Get current using AMI
-USED_AMI=$(yq -r ".[0].vars.ami.${ARCH}.\"${TEST_OS}\"" playbooks/deploy-aws.yaml)
-
-# Update to use uploaded AMI
-sed -i "s/rhel-9-4: ${USED_AMI}/rhel-9-4: ${AMI_ID}/" playbooks/deploy-aws.yaml
-
-# List all uploaded AMIs
-UPLOADED_AMI_LIST=$(
-    aws ec2 describe-images \
-        --filters "Name=tag:Name,Values=bootc-${TEST_OS}-${ARCH}" \
-        --query 'Images[*].ImageId' \
-        --output text
-)
-
-# Only keep current using and uploaded AMIs
-OLD_AMI=$(echo "$UPLOADED_AMI_LIST" | sed "s/${AMI_ID}//;s/${USED_AMI}//;s/[[:blank:]]//g")
-
-# Delete the third AMI
-if [[ "$OLD_AMI" != '' ]]; then
-    SNAPSHOT_ID=$(
-        aws ec2 describe-images \
-            --image-ids "$OLD_AMI" \
-            --query 'Images[*].BlockDeviceMappings[*].Ebs.SnapshotId' \
-            --output text
-    )
-
-    aws ec2 deregister-image \
-        --image-id "${OLD_AMI}"
-
-    aws ec2 delete-snapshot \
-        --snapshot-id "${SNAPSHOT_ID}"
-fi
+# Save AMI ID to ssm parameter
+aws ssm put-parameter \
+    --name "bootc-${TEST_OS}-${ARCH}" \
+    --type "String" \
+    --data-type "aws:ec2:image" \
+    --value "$AMI_ID" \
+    --overwrite

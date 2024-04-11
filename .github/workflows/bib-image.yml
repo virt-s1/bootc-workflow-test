@@ -9,7 +9,9 @@ on:
 jobs:
   pr-info:
     if: ${{ github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-rhel94') ||
+            (endsWith(github.event.comment.body, '/test-rhel95') ||
+            endsWith(github.event.comment.body, '/test-rhel95-bib-image') ||
+            endsWith(github.event.comment.body, '/test-rhel94') ||
             endsWith(github.event.comment.body, '/test-rhel94-bib-image') ||
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-bib-image') ||
@@ -48,6 +50,51 @@ jobs:
       sha: ${{ fromJson(steps.pr-api.outputs.data).head.sha }}
       ref: ${{ fromJson(steps.pr-api.outputs.data).head.ref }}
       repo_url: ${{ fromJson(steps.pr-api.outputs.data).head.repo.html_url }}
+
+  rhel95-bib-image:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-rhel95') ||
+            endsWith(github.event.comment.body, '/test-rhel95-bib-image')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        image_type: [ami, qcow2, vmdk]
+        exclude:
+          - arch: aarch64
+            image_type: vmdk
+        include:
+          - image_type: ami
+            platform: aws
+          - image_type: qcow2
+            platform: libvirt
+          - image_type: vmdk
+            platform: vsphere
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  # v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: RHEL-9.5.0-Nightly
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-rhel95-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
+          tmt_plan_regex: "${{ matrix.image_type }}"
+          tf_scope: private
+          secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL95_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
+          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   rhel94-bib-image:
     needs: pr-info
@@ -93,8 +140,8 @@ jobs:
           pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
-          variables: "TEST_OS=rhel-9-4;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
+          secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL94_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
+          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   cs9-bib-image:
     needs: pr-info
@@ -140,8 +187,8 @@ jobs:
           pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-bib-${{ matrix.image_type }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
+          secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
+          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   cs9-dev-bib-image:
     needs: pr-info
@@ -180,6 +227,18 @@ jobs:
             platform: vsphere
           - image_type: raw
             platform: libvirt
+          - arch: x86_64
+            build_arch: x86_64
+            runner_compose: RHEL-9.5.0-Nightly
+          - arch: aarch64
+            build_arch: aarch64
+            runner_compose: RHEL-9.5.0-Nightly
+          - arch: aarch64
+            build_arch: x86_64
+            runner_compose: Fedora-40
+          - arch: x86_64
+            build_arch: aarch64
+            runner_compose: Fedora-40
     runs-on: ubuntu-latest
 
     steps:
@@ -189,10 +248,12 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # Fedora-40 is for bib cross building test
+      # RHEL-9.5.0-Nightly is for bib non-cross building test
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: Fedora-40
+          compose: ${{ matrix.runner_compose }}
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
@@ -202,5 +263,5 @@ jobs:
           pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-bib-${{ matrix.image_type }}-on-${{ matrix.build_arch }}"
           tmt_plan_regex: "${{ matrix.image_type }}"
           tf_scope: private
-          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "TEST_OS=centos-stream-9;PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_NAME=centos-bootc-dev;IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
+          secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
+          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"

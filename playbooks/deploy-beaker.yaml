@@ -3,7 +3,7 @@
   gather_facts: false
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_user: ""
     ssh_key_pub: ""
@@ -11,10 +11,12 @@
     firmware: "{{ lookup('env', 'FIRMWARE') | default('uefi', true) }}"
     beaker_family:
       rhel-9-4: RedHatEnterpriseLinux9
+      rhel-9-5: RedHatEnterpriseLinux9
       centos-stream-9: CentOSStream9
     beaker_compose:
       # avoid rhel-9.4.0-updates-2024xxxx.xx
       rhel-9-4: rhel-9.4.0-20
+      rhel-9-5: rhel-9.5.0-20
       centos-stream-9: CentOS-Stream-9
 
   tasks:

@@ -3,13 +3,14 @@
   gather_facts: false
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     platform: "{{ lookup('env', 'PLATFORM') | default('openstack', true) }}"
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
     images:
+      rhel-9-5: RHEL-9.5.0-x86_64-nightly-latest
       rhel-9-4: RHEL-9.4.0-x86_64-nightly-latest
       centos-stream-9: CentOS-Stream-9-latest
     bib: "false"
@@ -39,6 +40,17 @@
           --protocol tcp \
           --dst-port 22 \
           "sg-bootc-{{ random_num }}"
+
+    - name: Get dot test os version
+      block:
+        - name: Get version from test_os
+          shell: echo {{ test_os }} | sed 's/rhel-//;s/-/\./'
+          register: result_os_version
+
+        - set_fact:
+            test_os_dot_version: "{{ result_os_version.stdout }}"
+      when:
+        - "'rhel' in test_os"
 
     - name: Generate user-data
       template:

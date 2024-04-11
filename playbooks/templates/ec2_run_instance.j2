@@ -9,11 +9,7 @@
 {% if test_os.startswith('rhel') %}
     --user-data file://user-data \
 {% endif %}
-{% if ami_id == "" %}
-    --image-id {{ ami[arch][test_os] }} \
-{% else %}
     --image-id {{ ami_id }} \
-{% endif %}
 {% if layered_image is defined and layered_image == 'nvidia' %}
     --instance-market-options MarketType=spot,SpotOptions=\{MaxPrice=1.0,SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate\} \
 {% else %}
