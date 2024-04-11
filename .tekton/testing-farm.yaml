@@ -151,7 +151,7 @@ spec:
 
         testing-farm request \
           --plan-filter "tag: stable" \
-          --environment IMAGE_URL="${IMAGE_URL}" \
+          --environment TIER1_IMAGE_URL="${IMAGE_URL}" \
           --environment CERT_URL="${CERT_URL}" \
           --environment DOWNLOAD_NODE="${DOWNLOAD_NODE}" \
           --environment RHEL_REGISTRY_URL="${RHEL_REGISTRY_URL}" \

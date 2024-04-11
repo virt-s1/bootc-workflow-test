@@ -4,11 +4,6 @@ set -exuo pipefail
 source tools/shared_lib.sh
 dump_runner
 
-# Prepare running environment
-greenprint "Install required packages"
-sudo dnf install -y --nogpgcheck podman skopeo wget firewalld lorax xorriso curl jq qemu-img qemu-kvm libvirt-client libvirt-daemon-kvm libvirt-daemon virt-install ansible-core
-ansible-galaxy collection install community.general
-
 greenprint "Start firewalld"
 sudo systemctl enable --now firewalld
 
@@ -76,54 +71,43 @@ PARTITION=${PARTITION:-"standard"}
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
-case "$TEST_OS" in
-    "rhel-9-4")
-        IMAGE_NAME="rhel9-rhel_bootc"
-        TIER1_IMAGE_URL="${RHEL_REGISTRY_URL}/${IMAGE_NAME}:rhel-9.4"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
-        CURRENT_COMPOSE_RHEL94=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_RHEL94}/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
-        # sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/latest-RHEL-9.4.0/" files/rhel-9-4.template | tee rhel-9-4.repo > /dev/null
-        ADD_REPO="COPY rhel-9-4.repo /etc/yum.repos.d/rhel-9-4.repo"
+case "$REDHAT_ID" in
+    "rhel")
+        # work with old TEST_OS variable value rhel-9-x
+        TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/\./-/')
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee rhel-9-y.repo > /dev/null
+        ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
         ADD_RHC="RUN dnf install -y rhc"
-        # The current image is built based on RHEL-9.4.0-20240130.10. It doesn't include patched anaconda. Let's use latest as workaround
-        BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_RHEL94}/compose/BaseOS/${ARCH}/os/"
-        # BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/\$basearch/os/"
+        BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/composes/RHEL-9/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="rhel9-unknown"
         BOOT_ARGS="uefi"
         CUT_DIRS=8
         ;;
-    "centos-stream-9")
-        IMAGE_NAME=${IMAGE_NAME:-"centos-bootc"}
-        TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:stream9"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
+    "centos")
+        # work with old TEST_OS variable value centos-stream-9
+        TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/-/-stream-/')
         ADD_REPO=""
         ADD_RHC=""
-        CURRENT_COMPOSE_CS9=$(skopeo inspect "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
-        BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_CS9}/compose/BaseOS/${ARCH}/os/"
+        BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=6
         ;;
-    "fedora-eln")
-        IMAGE_NAME="fedora-bootc"
-        TIER1_IMAGE_URL="quay.io/centos-bootc/${IMAGE_NAME}:eln"
-        TIER1_IMAGE_URL="${IMAGE_URL-$TIER1_IMAGE_URL}"
+    "fedora")
         ADD_REPO=""
         ADD_RHC=""
-        BOOT_LOCATION="https://odcs.fedoraproject.org/composes/production/latest-Fedora-ELN/compose/BaseOS/${ARCH}/os/"
+        BOOT_LOCATION="https://odcs.fedoraproject.org/composes/production/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="fedora-rawhide"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=7
         ;;
     *)
-        redprint "Variable TEST_OS has to be defined"
+        redprint "Variable TIER1_IMAGE_URL is not supported"
         exit 1
         ;;
 esac
 
-VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
-TEST_IMAGE_NAME="${IMAGE_NAME}-os_replace"
+TEST_IMAGE_NAME="bootc-workflow-test"
 TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Generate auth.json for registry auth"
@@ -268,7 +252,7 @@ EOF
                       --console file,source.path="$VIRT_LOG" \
                       --nographics \
                       --noautoconsole \
-                      --wait=-1 \
+                      --wait \
                       --noreboot
 else
     greenprint "Download boot.iso"
@@ -290,7 +274,7 @@ else
                           --console file,source.path="$VIRT_LOG" \
                           --nographics \
                           --noautoconsole \
-                          --wait=-1 \
+                          --wait \
                           --noreboot
     else
         greenprint "Install $TEST_OS via anaconda on $FIRMWARE VM"
@@ -307,7 +291,7 @@ else
                           --console file,source.path="$VIRT_LOG" \
                           --nographics \
                           --noautoconsole \
-                          --wait=-1 \
+                          --wait \
                           --noreboot
     fi
 fi
@@ -369,8 +353,9 @@ export ANSIBLE_CONFIG="${PWD}/playbooks/ansible.cfg"
 greenprint "Run ostree checking test"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e image_label_version_id="$VERSION_ID" \
+    -e image_label_version_id="$REDHAT_VERSION_ID" \
     playbooks/check-system.yaml
 
 greenprint "Create upgrade Containerfile"
@@ -393,8 +378,9 @@ ansible-playbook -v \
 greenprint "Run ostree checking test after upgrade"
 ansible-playbook -v \
     -i "$INVENTORY_FILE" \
+    -e test_os="$TEST_OS" \
     -e bootc_image="$TEST_IMAGE_URL" \
-    -e image_label_version_id="$VERSION_ID" \
+    -e image_label_version_id="$REDHAT_VERSION_ID" \
     -e upgrade="true" \
     playbooks/check-system.yaml
 

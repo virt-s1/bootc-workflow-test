@@ -2,7 +2,7 @@
 - hosts: guest
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     rhc_ak: "{{ lookup('env', 'RHC_AK') | default('', true) }}"
     rhc_orgid: "{{ lookup('env', 'RHC_ORGID') | default('', true) }}"
     bootc_image: ""

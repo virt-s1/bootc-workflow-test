@@ -3,7 +3,7 @@
   gather_facts: false
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     ssh_key_pub: ""
     ssh_user: "cloud-user"
@@ -151,6 +151,17 @@
           --sku Standard_LRS \
           --kind StorageV2 \
           --tags "project=bootc"
+
+    - name: Get dot test os version
+      block:
+        - name: Get version from test_os
+          shell: echo {{ test_os }} | sed 's/rhel-//;s/-/\./'
+          register: result_os_version
+
+        - set_fact:
+            test_os_dot_version: "{{ result_os_version.stdout }}"
+      when:
+        - "'rhel' in test_os"
 
     - name: Generate user-data
       template:

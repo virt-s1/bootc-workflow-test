@@ -1,9 +1,9 @@
-[rhel-9.4-baseos]
+[rhel-9.y-baseos]
 baseurl=http://REPLACE_ME/rhel-9/composes/RHEL-9/REPLACE_COMPOSE_ID/compose/BaseOS/$basearch/os/
 enabled=1
 gpgcheck=0
 
-[rhel-9.4-appstream]
+[rhel-9.y-appstream]
 baseurl=http://REPLACE_ME/rhel-9/composes/RHEL-9/REPLACE_COMPOSE_ID/compose/AppStream/$basearch/os/
 enabled=1
 gpgcheck=0

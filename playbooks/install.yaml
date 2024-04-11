@@ -2,7 +2,7 @@
 - hosts: guest
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     platform: "{{ lookup('env', 'PLATFORM') | default('aws', true) }}"
     test_image_url: ""
 
@@ -36,7 +36,7 @@
     - name: Install podman from internal
       dnf:
         disablerepo: "*"
-        enablerepo: "rhel-94-*"
+        enablerepo: "rhel-9y-*"
         name:
           - podman
         state: present
@@ -62,8 +62,12 @@
       register: result
       until: result is successful
 
-    # The latest bootc is only available in centos-bootc-dev image
-    - name: Install image with latest bootc
+    - name: Get bootc version
+      command: podman run --rm {{ test_image_url }} rpm -q bootc
+      become: true
+      register: result_bootc_version
+
+    - name: Install image with bootc-0.1.8 or later
       command:
         "podman run \
          --rm \
@@ -76,9 +80,9 @@
          {{ test_image_url }} \
          bootc install to-existing-root"
       become: true
-      when: "'centos-bootc-dev' in test_image_url"
+      when: "'0.1.7' not in result_bootc_version.stdout"
 
-    - name: Install image with released bootc
+    - name: Install image with boot-0.1.7
       command:
         "podman run \
          --rm \
@@ -90,7 +94,7 @@
          {{ test_image_url }} \
          bootc install to-filesystem --replace=alongside /target"
       become: true
-      when: "'centos-bootc-dev' not in test_image_url"
+      when: "'0.1.7' in result_bootc_version.stdout"
 
     # 10 minutes reboot timeout is for bare metal test
     - name: Reboot to deploy new system

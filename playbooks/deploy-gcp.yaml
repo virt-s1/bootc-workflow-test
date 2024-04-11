@@ -3,7 +3,7 @@
   gather_facts: false
   become: false
   vars:
-    test_os: "{{ lookup('env', 'TEST_OS') | default('centos-stream-9', true) }}"
+    test_os: ""
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
     flavor:
       x86_64: "n2-standard-2"
@@ -11,12 +11,6 @@
     ssh_key_pub: ""
     inventory_file: ""
     download_node: "{{ lookup('env', 'DOWNLOAD_NODE') | default('', true) }}"
-    image_family:
-      centos-stream-9: centos-stream-9
-      rhel-9-4: centos-stream-9
-    image_project:
-      centos-stream-9: centos-cloud
-      rhel-9-4: centos-cloud
 
   tasks:
     - set_fact:
@@ -34,8 +28,21 @@
       when: "'centos' in test_os or 'rhel' in test_os"
 
     - set_fact:
-        image_args: "--image-family={{ image_family[test_os] }} --image-project={{ image_project[test_os] }}"
-      when: "'centos' in test_os or 'rhel' in test_os"
+        image_args: "--image-family=centos-stream-9 --image-project=centos-cloud"
+      when: "'centos' in test_os"
+
+    - name: Get RHEL GCP image name
+      shell: |
+        /usr/bin/gcloud compute images list \
+          --project={{ lookup('env', 'GCP_PROJECT') }} \
+          --filter="labels.project=bootc AND labels.test_os={{ test_os }} AND labels.arch={{ arch }}" \
+          --format json | jq -r '.[0].name'
+      register: result_image_name
+      when: "'rhel' in test_os"
+
+    - set_fact:
+        image_args: "--image={{ result_image_name.stdout }}"
+      when: "'rhel' in test_os"
 
     - name: Create gcp instance
       command:
