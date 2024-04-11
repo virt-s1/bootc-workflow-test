@@ -49,6 +49,9 @@ execute:
     - when: arch == x86_64 or arch == aarch64
       provision+:
         hardware:
+          cpu:
+            processors: ">= 2"
+          memory: ">= 6 GB"
           virtualization:
             is-supported: true
 
@@ -87,5 +90,8 @@ execute:
     - when: arch == x86_64 or arch == aarch64
       provision+:
         hardware:
+          cpu:
+            processors: ">= 2"
+          memory: ">= 6 GB"
           virtualization:
             is-supported: true
