@@ -55,6 +55,32 @@ execute:
           virtualization:
             is-supported: true
 
+/raw:
+  summary: Use bib generate raw image and test locally (nested)
+  tag: libvirt
+  environment+:
+    PLATFORM: libvirt
+    IMAGE_TYPE: raw
+    LAYERED_IMAGE: cloud-init
+  prepare+:
+    - how: install
+      package:
+        - qemu-img
+        - qemu-kvm
+        - libvirt
+        - virt-install
+  adjust+:
+    - when: arch == ppc64le
+      enabled: false
+    - when: arch == x86_64 or arch == aarch64
+      provision+:
+        hardware:
+          cpu:
+            processors: ">= 2"
+          memory: ">= 6 GB"
+          virtualization:
+            is-supported: true
+
 /vmdk:
   summary: Use bib generate vmdk image and test on vsphere
   tag: vmdk

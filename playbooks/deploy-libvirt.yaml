@@ -81,6 +81,10 @@
         - user-data
         - meta-data
 
+    # virt-install with --cloud-init always shutdown vm on the first reboot
+    # https://github.com/virt-manager/virt-manager/issues/497
+    # workaround is shutdown vm in cloud-init when cloud-init finished
+    # then start vm
     - name: Generate virt-install script
       template:
         src: virt-install.bash.j2
@@ -91,48 +95,15 @@
       command: "{{ playbook_dir }}/virt-install.bash"
       become: true
 
-    - name: Get VM IP address
-      shell:
-        virsh domifaddr {{ instance_name }} | grep -oP '(?:\d+\.){3}\d+'
-      register: result
-      until: result.stdout != ""
-      retries: 30
-      delay: 10
+    - name: Wait until VM is shut off
+      command: virsh domstate {{ instance_name }}
       become: true
+      register: result_domestate
+      retries: 10
+      until: result_domestate.stdout == "shut off"
 
-    - set_fact:
-        instance_ip: "{{ result.stdout }}"
-
-    - name: Waits until instance is reachable
-      wait_for:
-        host: "{{ instance_ip }}"
-        port: 22
-        search_regex: OpenSSH
-        delay: 10
-      retries: 30
-      register: result_ssh_check
-      until: result_ssh_check is success
-
-    - name: add guest ip into host guest group
-      add_host:
-        name: "{{ instance_ip  }}"
-        groups: guest
-
-    - name: ensure cloud-init has finished
-      raw: test -f /var/lib/cloud/instance/boot-finished
-      retries: 60
-      register: cloud_init_check
-      changed_when: false
-      until: cloud_init_check is success
-      delegate_to: "{{ instance_ip }}"
-
-    - name: Wait 10 seconds before VM restart
-      wait_for:
-        timeout: 10
-
-    - name: Stop and start vm
+    - name: Start vm
       shell: |
-        virsh destroy {{ instance_name }}
         virsh start {{ instance_name }}
       become: true
 
@@ -166,11 +137,6 @@
       add_host:
         name: "{{ instance_ip }}"
         groups: guest
-
-    - name: Wait 10 seconds for VM
-      wait_for:
-        timeout: 10
-      delegate_to: localhost
 
     - name: Write instance ip to inventory file
       community.general.ini_file:
