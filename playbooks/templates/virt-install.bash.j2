@@ -8,10 +8,11 @@ virt-install \
     --os-variant {{ os_variant[test_os] }} \
     --network default \
     --disk size=10,path="{{ image_path }}/{{ rhel_guest_image_fname }}" \
-    --cloud-init user-data="{{ playbook_dir }}/libvirt-user-data",meta-data="{{ playbook_dir }}/libvirt-meta-data" \
+    --cloud-init user-data="{{ playbook_dir }}/libvirt-user-data",meta-data="{{ playbook_dir }}/libvirt-meta-data",disable=on \
 {% if bib == 'false' %}
     --filesystem={{ air_gapped_dir }},mount_tag,driver.type=virtiofs,accessmode=passthrough \
     --memorybacking=source.type=memfd,access.mode=shared \
 {% endif %}
     --graphics none \
-    --noautoconsole
+    --noautoconsole \
+    --wait

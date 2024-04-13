@@ -192,7 +192,7 @@ case "$IMAGE_TYPE" in
             -e ami_id="$AMI_ID" \
             "playbooks/deploy-aws.yaml"
         ;;
-    "qcow2")
+    "qcow2"|"raw")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         mkdir -p output
         sudo podman run \
@@ -205,12 +205,18 @@ case "$IMAGE_TYPE" in
             -v "$(pwd)/output":/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             quay.io/centos-bootc/bootc-image-builder:latest \
-            --type qcow2 \
+            --type "$IMAGE_TYPE" \
             --target-arch "$ARCH" \
+            --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
             --local \
             "$LOCAL_IMAGE_URL"
 
-        sudo mv output/qcow2/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
+        if [[ "$IMAGE_TYPE" == "raw" ]]; then
+            qemu-img convert -f raw output/image/disk.raw -O qcow2 output/image/disk.qcow2
+            sudo mv output/image/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
+        else
+            sudo mv output/qcow2/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
+        fi
 
         greenprint "Deploy $IMAGE_TYPE instance"
         ansible-playbook -v \

@@ -58,7 +58,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk]
+        image_type: [ami, qcow2, vmdk, raw]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -69,6 +69,8 @@ jobs:
             platform: libvirt
           - image_type: vmdk
             platform: vsphere
+          - image_type: raw
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
@@ -103,7 +105,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk]
+        image_type: [ami, qcow2, vmdk, raw]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -114,6 +116,8 @@ jobs:
             platform: libvirt
           - image_type: vmdk
             platform: vsphere
+          - image_type: raw
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
@@ -148,7 +152,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk]
+        image_type: [ami, qcow2, vmdk, raw]
         build_arch: [x86_64, aarch64]
         exclude:
           - image_type: vmdk
@@ -161,6 +165,12 @@ jobs:
           - image_type: qcow2
             arch: aarch64
             build_arch: x86_64
+          - image_type: raw
+            arch: x86_64
+            build_arch: aarch64
+          - image_type: raw
+            arch: aarch64
+            build_arch: x86_64
         include:
           - image_type: ami
             platform: aws
@@ -168,6 +178,8 @@ jobs:
             platform: libvirt
           - image_type: vmdk
             platform: vsphere
+          - image_type: raw
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
