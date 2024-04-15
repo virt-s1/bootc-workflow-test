@@ -87,8 +87,7 @@ VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | j
 TEST_IMAGE_NAME="${IMAGE_NAME}-test"
 # bootc-image-builder does not support private image repo,
 # use temporary public image repo as workaround
-TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
-LOCAL_IMAGE_URL="localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+TEST_IMAGE_URL="quay.io/rhel-edge/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Configure container build arch"
 case "$ARCH" in
@@ -164,17 +163,15 @@ case "$IMAGE_TYPE" in
             --pull=newer \
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type ami \
             --target-arch "$ARCH" \
             --aws-ami-name "$AMI_NAME" \
             --aws-bucket "$AWS_BUCKET_NAME" \
             --aws-region "$AWS_REGION" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+            "$TEST_IMAGE_URL"
 
         greenprint "Get uploaded AMI ID and snapshot ID"
         AMI_ID=$(
@@ -203,13 +200,11 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type "$IMAGE_TYPE" \
             --target-arch "$ARCH" \
             --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+            "$TEST_IMAGE_URL"
 
         if [[ "$IMAGE_TYPE" == "raw" ]]; then
             qemu-img convert -f raw output/image/disk.raw -O qcow2 output/image/disk.qcow2
@@ -239,12 +234,10 @@ case "$IMAGE_TYPE" in
             --tls-verify=false \
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type vmdk \
             --target-arch "$ARCH" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+            "$TEST_IMAGE_URL"
 
         greenprint "Deploy $IMAGE_TYPE instance"
         DATACENTER_70="Datacenter7.0"
