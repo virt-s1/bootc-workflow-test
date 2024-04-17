@@ -177,3 +177,6 @@ spec:
           --arch "${ARCH}" \
           --context "arch=${ARCH}" \
           --timeout "${TIMEOUT}"
+      # default to 60m, extend to 90m
+      # https://tekton.dev/docs/pipelines/tasks/#specifying-a-timeout
+      timeout: "1h30m"
