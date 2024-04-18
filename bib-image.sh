@@ -95,14 +95,10 @@ case "$ARCH" in
 esac
 
 
-[[ $- =~ x ]] && debug=1 && set +x
-sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee "${LAYERED_DIR}"/auth.json > /dev/null
-[[ $debug == 1 ]] && set -x
 greenprint "Create ${TEST_OS} installation Containerfile"
 sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO\n$ADD_RHC|" "$INSTALL_CONTAINERFILE"
 tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 RUN dnf -y clean all
-COPY auth.json /etc/ostree/auth.json
 $REPLACE_CLOUD_USER
 EOF
 
@@ -116,6 +112,12 @@ cat "$INSTALL_CONTAINERFILE"
 
 greenprint "Build $TEST_OS installation container image"
 sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+
+[[ $- =~ x ]] && debug=1 && set +x
+sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
+[[ $debug == 1 ]] && set -x
+sed -i "s|^FROM.*|FROM ${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}|" examples/container-auth/Containerfile
+podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --secret id=creds,src=./auth.json -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" examples/container-auth
 
 greenprint "Push $TEST_OS installation container image"
 sudo podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
