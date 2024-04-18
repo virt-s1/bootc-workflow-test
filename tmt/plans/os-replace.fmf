@@ -116,3 +116,17 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
+
+/bare:
+  summary: Run os-replace test on bare metal aws bare server
+  tag: bare
+  environment+:
+    PLATFORM: aws
+    LAYERED_IMAGE: cloud-init
+    AWS_BARE: true
+  prepare+:
+    - how: shell
+      script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
+  adjust+:
+    - when: arch != x86_64 and arch != aarch64
+      enabled: false

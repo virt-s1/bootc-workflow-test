@@ -10,11 +10,11 @@
       command: rpm-ostree rollback
       become: true
 
-    # 10 minutes reboot timeout is for bare metal test
+    # 20 minutes reboot timeout is for aws ec2 bare instance test
     - name: Reboot to deploy new system
       reboot:
         post_reboot_delay: 60
-        reboot_timeout: 600
+        reboot_timeout: 1200
       become: true
       ignore_errors: true
 

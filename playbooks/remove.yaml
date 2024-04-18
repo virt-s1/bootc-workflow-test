@@ -48,6 +48,7 @@
           shell: |
             aws ec2 wait instance-terminated \
               --instance-ids "{{ instance_id }}"
+          ignore_errors: true
 
         - name: remove ec2 key
           shell: |

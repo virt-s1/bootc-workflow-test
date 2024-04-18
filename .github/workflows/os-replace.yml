@@ -61,13 +61,12 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64]
-        platform: [openstack, gcp, aws, azure, libvirt, beaker]
+        platform: [openstack, gcp, aws, azure, libvirt, bare]
         include:
           - arch: aarch64
             platform: aws
-          - arch: x86_64
-            platform: beaker
-            firmware: bios
+          - arch: aarch64
+            platform: bare
     runs-on: ubuntu-latest
 
     steps:
@@ -184,19 +183,12 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64]
-        platform: [openstack, gcp, aws, azure, libvirt, beaker]
+        platform: [openstack, gcp, aws, azure, libvirt, bare]
         include:
           - arch: aarch64
             platform: aws
           - arch: aarch64
-            platform: beaker
-            firmware: uefi
-          - arch: x86_64
-            platform: beaker
-            firmware: uefi
-          - arch: x86_64
-            platform: beaker
-            firmware: bios
+            platform: bare
     runs-on: ubuntu-latest
 
     steps:
