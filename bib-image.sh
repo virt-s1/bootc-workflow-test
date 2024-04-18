@@ -12,6 +12,7 @@ SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 SSH_KEY_PUB="${SSH_KEY}.pub"
 
+BIB_IMAGE_URL="${BIB_IMAGE_URL:-'quay.io/centos-bootc/bootc-image-builder:latest'}"
 LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
 LAYERED_DIR="examples/$LAYERED_IMAGE"
 INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
@@ -157,7 +158,7 @@ case "$IMAGE_TYPE" in
             -v /var/lib/containers/storage:/var/lib/containers/storage \
             --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
             --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type ami \
             --target-arch "$ARCH" \
             --aws-ami-name "$AMI_NAME" \
@@ -195,7 +196,7 @@ case "$IMAGE_TYPE" in
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type "$IMAGE_TYPE" \
             --target-arch "$ARCH" \
             --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
@@ -232,7 +233,7 @@ case "$IMAGE_TYPE" in
             --security-opt label=type:unconfined_t \
             -v "$(pwd)/output":/output \
             -v /var/lib/containers/storage:/var/lib/containers/storage \
-            quay.io/centos-bootc/bootc-image-builder:latest \
+            "$BIB_IMAGE_URL" \
             --type vmdk \
             --target-arch "$ARCH" \
             --local \
