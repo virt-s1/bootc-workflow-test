@@ -1,6 +1,8 @@
 #!/bin/bash
 set -exuo pipefail
 
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 source tools/shared_lib.sh
 dump_runner
 
@@ -67,9 +69,6 @@ KS_FILE=${TEMPDIR}/ks.cfg
 GUEST_IP="192.168.100.50"
 FIRMWARE=${FIRMWARE:-"bios"}
 PARTITION=${PARTITION:-"standard"}
-
-greenprint "Login quay.io"
-podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 case "$REDHAT_ID" in
     "rhel")

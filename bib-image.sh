@@ -1,6 +1,9 @@
 #!/bin/bash
 set -exuo pipefail
 
+sudo podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
+
 source tools/shared_lib.sh
 dump_runner
 
@@ -20,9 +23,6 @@ QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; ech
 INVENTORY_FILE="${TEMPDIR}/inventory"
 
 REPLACE_CLOUD_USER=""
-
-greenprint "Login quay.io"
-sudo podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
 case "$REDHAT_ID" in
     "rhel")
