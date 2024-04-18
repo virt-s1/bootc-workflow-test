@@ -19,6 +19,7 @@ INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
 UPGRADE_CONTAINERFILE=${TEMPDIR}/Containerfile.upgrade
 QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')}"
 INVENTORY_FILE="${TEMPDIR}/inventory"
+AWS_BARE="${AWS_BARE-false}"
 
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
@@ -174,6 +175,7 @@ ansible-playbook -v \
     -e inventory_file="$INVENTORY_FILE" \
     -e air_gapped_dir="$AIR_GAPPED_DIR" \
     -e layered_image="$LAYERED_IMAGE" \
+    -e aws_bare="$AWS_BARE" \
     "playbooks/deploy-${PLATFORM}.yaml"
 
 greenprint "Install $TEST_OS bootc system"
