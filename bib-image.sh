@@ -12,7 +12,7 @@ SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 SSH_KEY_PUB="${SSH_KEY}.pub"
 
-BIB_IMAGE_URL="${BIB_IMAGE_URL:-'quay.io/centos-bootc/bootc-image-builder:latest'}"
+BIB_IMAGE_URL="${BIB_IMAGE_URL:-quay.io/centos-bootc/bootc-image-builder:latest}"
 LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
 LAYERED_DIR="examples/$LAYERED_IMAGE"
 INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
@@ -149,7 +149,7 @@ case "$IMAGE_TYPE" in
     "ami")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         AMI_NAME="bootc-bib-${TEST_OS}-${ARCH}-${QUAY_REPO_TAG}"
-        AWS_BUCKET_NAME="bootc-bib-images"
+        AWS_BUCKET_NAME="bootc-bib-images-test"
         sudo podman run \
             --rm \
             -it \
