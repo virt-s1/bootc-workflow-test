@@ -13,7 +13,8 @@ jobs:
             endsWith(github.event.comment.body, '/test-rhel95-replace') ||
             endsWith(github.event.comment.body, '/test-rhel94') ||
             endsWith(github.event.comment.body, '/test-rhel94-replace') ||
-            endsWith(github.event.comment.body, '/test-rhel94-beta-replace') ||
+            endsWith(github.event.comment.body, '/test-rhel9y-snapshot') ||
+            endsWith(github.event.comment.body, '/test-rhel9y-snapshot-replace') ||
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-replace') ||
             endsWith(github.event.comment.body, '/test-cs9-dev') ||
@@ -221,18 +222,22 @@ jobs:
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};CERT_URL=${{ secrets.CERT_URL }};BEAKER_KEYTAB_B64=${{ secrets.BEAKER_KEYTAB_B64 }};BEAKER_CLIENT_B64=${{ secrets.BEAKER_CLIENT_B64 }};KRB5_CONF_B64=${{ secrets.KRB5_CONF_B64 }};AZURE_SECRET=${{ secrets.AZURE_SECRET }}"
           variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};AWS_REGION=${{ secrets.AWS_REGION }};FIRMWARE=${{ matrix.firmware }};AZURE_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }};AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }};AZURE_TENANT=${{ secrets.AZURE_TENANT }}"
 
-  rhel94-beta-replace:
+  rhel9y-snapshot-replace:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-rhel94-beta-replace')) }}
+            (endsWith(github.event.comment.body, '/test-rhel9y-snapshot') ||
+            endsWith(github.event.comment.body, '/test-rhel9y-snapshot-replace')) }}
     continue-on-error: true
     strategy:
       matrix:
         arch: [x86_64]
-        platform: [openstack, gcp, aws, libvirt]
+        platform: [openstack, gcp, aws, azure, libvirt, beaker]
         include:
           - arch: aarch64
             platform: aws
+          - arch: x86_64
+            platform: beaker
+            firmware: bios
     runs-on: ubuntu-latest
 
     steps:
@@ -252,8 +257,8 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel94-beta-${{ matrix.arch }}-replace-${{ matrix.platform }}"
+          pull_request_status_name: "bootc-rhel9y-snapshot-${{ matrix.arch }}-replace-${{ matrix.platform }}"
           tmt_plan_regex: "${{ matrix.platform }}"
           tf_scope: private
-          secrets: "OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};CERT_URL=${{ secrets.CERT_URL }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};AWS_REGION=${{ secrets.AWS_REGION }};TIER1_IMAGE_URL='quay.io/xiaofwan/rhel9-rhel_bootc-os_replace:9.4'"
+          secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL9Y_SNAPSHOT_IMAGE_URL }};OS_USERNAME=${{ secrets.OS_USERNAME }};OS_PASSWORD=${{ secrets.OS_PASSWORD }};OS_AUTH_URL=${{ secrets.OS_AUTH_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};GCP_SERVICE_ACCOUNT_FILE_B64=${{ secrets.GCP_SERVICE_ACCOUNT_FILE_B64 }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};CERT_URL=${{ secrets.CERT_URL }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
+          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};OS_PROJECT_NAME=${{ secrets.OS_PROJECT_NAME }};OS_USER_DOMAIN_NAME=${{ secrets.OS_USER_DOMAIN_NAME }};OS_PROJECT_DOMAIN_NAME=${{ secrets.OS_PROJECT_DOMAIN_NAME }};GCP_PROJECT=${{ secrets.GCP_PROJECT }};AWS_REGION=${{ secrets.AWS_REGION }}"
