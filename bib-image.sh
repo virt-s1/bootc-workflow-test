@@ -13,7 +13,7 @@ SSH_KEY=${TEMPDIR}/id_rsa
 ssh-keygen -f "${SSH_KEY}" -N "" -q -t rsa-sha2-256 -b 2048
 SSH_KEY_PUB="${SSH_KEY}.pub"
 
-BIB_IMAGE_URL="${BIB_IMAGE_URL:-quay.io/centos-bootc/bootc-image-builder:latest}"
+BIB_IMAGE_URL="${BIB_IMAGE_URL:-quay.io/xiaofwan/bootc-image-builder:osbuild-115}"
 LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
 LAYERED_DIR="examples/$LAYERED_IMAGE"
 INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
