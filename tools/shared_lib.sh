@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# shellcheck disable=SC2034
-REDHAT_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.id"')
-REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
-CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
-
 # Dumps details about the instance running the CI job.
 function dump_runner {
     RUNNER_CPUS=$(nproc)
@@ -51,3 +46,15 @@ function retry {
     done
 }
 
+function image_inspect {
+    # shellcheck disable=SC2034
+    if [[ $TIER1_IMAGE_URL == quay* ]]; then
+        REDHAT_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" docker://"${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.id"')
+        REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
+        CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
+    else
+        REDHAT_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.id"')
+        REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
+        CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
+    fi
+}

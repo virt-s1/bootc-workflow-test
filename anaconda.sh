@@ -3,6 +3,7 @@ set -exuo pipefail
 
 source tools/shared_lib.sh
 dump_runner
+image_inspect
 
 greenprint "Start firewalld"
 sudo systemctl enable --now firewalld
