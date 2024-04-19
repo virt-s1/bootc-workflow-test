@@ -48,7 +48,13 @@ function retry {
 
 function image_inspect {
     # shellcheck disable=SC2034
-    if [[ $TIER1_IMAGE_URL == quay* ]]; then
+    # downstream only for bib
+    if [[ ${TIER1_IMAGE_URL} =~ bootc-image-builder ]]; then
+        VERSION=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" docker://"${TIER1_IMAGE_URL}" | jq -r '.Labels.version')
+        REDHAT_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" docker://"${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}" | jq -r '.Labels."redhat.id"')
+        REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}" | jq -r '.Labels."redhat.version-id"')
+        CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}" | jq -r '.Labels."redhat.compose-id"')
+    elif [[ $TIER1_IMAGE_URL == quay* ]]; then
         REDHAT_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" docker://"${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.id"')
         REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
         CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
