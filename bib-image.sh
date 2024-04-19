@@ -3,6 +3,7 @@ set -exuo pipefail
 
 source tools/shared_lib.sh
 dump_runner
+image_inspect
 
 TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
