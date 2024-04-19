@@ -130,13 +130,26 @@ spec:
           skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
-          COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
-          if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
-            COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
-          elif [[ "${COMPOSE_ID}" == "CentOS-Stream-"* ]]; then
-            COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^CentOS-Stream-[0-9][0-9]*')
+          if [[ $IMAGE_NAME =~ ^rhel-bootc ]]; then
+            COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
+            if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
+              COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
+            elif [[ "${COMPOSE_ID}" == "CentOS-Stream-"* ]]; then
+              COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^CentOS-Stream-[0-9][0-9]*')
+            else
+              COMPOSE=Fedora-Rawhide
+            fi
+          elif [[ $IMAGE_NAME =~ ^bootc-image-builder ]]; then
+            BASE_IMAGE_NAME=$(jq -r '.Labels.name' skopeo_inspect.json)
+            BASE_IMAGE_VERSION=$(jq -r '.Labels.version' skopeo_inspect.json)
+            if [[ ${BASE_IMAGE_NAME} =~ ^ubi ]]; then
+              COMPOSE=RHEL-${BASE_IMAGE_VERSION}-Nightly
+            else
+              COMPOSE=Fedora-Rawhide
+            fi
           else
-            COMPOSE=Fedora-Rawhide
+            echo "Error: unknown container image name: $IMAGE_NAME"
+            exit 1
           fi
           COUNT=$(expr $COUNT + 1)
         done
