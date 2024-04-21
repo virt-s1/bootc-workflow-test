@@ -19,7 +19,12 @@ INSTALL_CONTAINERFILE="$LAYERED_DIR/Containerfile"
 UPGRADE_CONTAINERFILE=${TEMPDIR}/Containerfile.upgrade
 QUAY_REPO_TAG="${QUAY_REPO_TAG:-$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')}"
 INVENTORY_FILE="${TEMPDIR}/inventory"
-AWS_BARE="${AWS_BARE-false}"
+AWS_BARE="${AWS_BARE-False}"
+
+# bare PLATFORM uses aws bare instance
+if [[ "$PLATFORM" == bare ]]; then
+    PLATFORM="aws"
+fi
 
 greenprint "Login quay.io"
 podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io

@@ -123,7 +123,7 @@ execute:
   environment+:
     PLATFORM: aws
     LAYERED_IMAGE: cloud-init
-    AWS_BARE: true
+    AWS_BARE: True
   prepare+:
     - how: shell
       script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
