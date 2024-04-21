@@ -8,7 +8,6 @@
     ssh_user: ""
     ssh_key_pub: ""
     inventory_file: ""
-    firmware: "{{ lookup('env', 'FIRMWARE') | default('uefi', true) }}"
     beaker_family:
       rhel-9-4: RedHatEnterpriseLinux9
       rhel-9-5: RedHatEnterpriseLinux9
