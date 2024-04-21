@@ -54,14 +54,14 @@
         random_instance_type: "c5n.metal"
         spot_max_price: "1.5"
       when:
-        - aws_bare | default('') == "true" and arch == "x86_64"
+        - aws_bare | default('') == "True" and arch == "x86_64"
 
     - name: set random instance type to a fixed value for aarch64 bare test
       set_fact:
         random_instance_type: "c6g.metal"
         spot_max_price: "1.0"
       when:
-        - aws_bare | default('') == "true" and arch == "aarch64"
+        - aws_bare | default('') == "True" and arch == "aarch64"
 
     - name: get virtqe subnet
       shell: |
