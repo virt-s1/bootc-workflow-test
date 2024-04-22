@@ -24,6 +24,9 @@ spec:
     - name: TESTING_FARM_API_URL
       default: https://api.dev.testing-farm.io/v0.1
       description: The testing-farm instance API to use
+    - name: TMT_TAG
+      default: "stable"
+      description: TMT tag for the testing-farm plan filter
     - name: CERT_URL
     - name: DOWNLOAD_NODE
     - name: RHEL_REGISTRY_URL
@@ -57,6 +60,8 @@ spec:
           value: $(params.TIMEOUT)
         - name: TESTING_FARM_API_URL
           value: $(params.TESTING_FARM_API_URL)
+        - name: TMT_TAG
+          value: $(params.TMT_TAG)
         - name: CERT_URL
           value: $(params.CERT_URL)
         - name: DOWNLOAD_NODE
@@ -163,7 +168,7 @@ spec:
         fi
 
         testing-farm request \
-          --plan-filter "tag: stable" \
+          --plan-filter "tag: ${TMT_TAG}" \
           --environment TIER1_IMAGE_URL="${IMAGE_URL}" \
           --environment CERT_URL="${CERT_URL}" \
           --environment DOWNLOAD_NODE="${DOWNLOAD_NODE}" \

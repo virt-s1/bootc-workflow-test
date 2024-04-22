@@ -33,6 +33,10 @@ spec:
       default: https://api.dev.testing-farm.io/v0.1
       description: The testing-farm instance API to use
       type: string
+    - name: TMT_TAG
+      default: "stable"
+      description: TMT tag for the testing-farm plan filter
+      type: string
     - name: CERT_URL
     - name: DOWNLOAD_NODE
     - name: RHEL_REGISTRY_URL
@@ -67,6 +71,8 @@ spec:
           value: $(params.TIMEOUT)
         - name: TESTING_FARM_API_URL
           value: $(params.TESTING_FARM_API_URL)
+        - name: TMT_TAG
+          value: $(params.TMT_TAG)
         - name: CERT_URL
           value: $(params.CERT_URL)
         - name: DOWNLOAD_NODE
