@@ -148,7 +148,7 @@ spec:
             BASE_IMAGE_NAME=$(jq -r '.Labels.name' skopeo_inspect.json)
             BASE_IMAGE_VERSION=$(jq -r '.Labels.version' skopeo_inspect.json)
             if [[ ${BASE_IMAGE_NAME} =~ ^ubi ]]; then
-              COMPOSE=RHEL-${BASE_IMAGE_VERSION}-Nightly
+              COMPOSE=RHEL-${BASE_IMAGE_VERSION}.0-Nightly
             else
               COMPOSE=Fedora-Rawhide
             fi
