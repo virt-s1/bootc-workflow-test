@@ -32,7 +32,7 @@ execute:
 
 /qcow2:
   summary: Use bib generate qcow2 image and test locally (nested)
-  tag: libvirt
+  tag: [libvirt, stable, bib]
   environment+:
     PLATFORM: libvirt
     IMAGE_TYPE: qcow2
@@ -57,7 +57,7 @@ execute:
 
 /raw:
   summary: Use bib generate raw image and test locally (nested)
-  tag: libvirt
+  tag: [libvirt, stable, bib]
   environment+:
     PLATFORM: libvirt
     IMAGE_TYPE: raw
@@ -97,7 +97,7 @@ execute:
 
 /iso:
   summary: Use bib generate ISO image and test locally (nested)
-  tag: libvirt
+  tag: [libvirt, stable, bib]
   environment+:
     PLATFORM: libvirt
     IMAGE_TYPE: iso
