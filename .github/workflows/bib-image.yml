@@ -228,7 +228,20 @@ jobs:
             platform: vsphere
           - image_type: raw
             platform: libvirt
+          - arch: x86_64
+            build_arch: x86_64
+            runner_compose: RHEL-9.5.0-Nightly
+          - arch: aarch64
+            build_arch: aarch64
+            runner_compose: RHEL-9.5.0-Nightly
+          - arch: x86_64
+            build_arch: aarch64
+            runner_compose: Fedora-40
+          - arch: aarch64
+            build_arch: x86_64
+            runner_compose: Fedora-40
     runs-on: ubuntu-latest
+    # Only run cross-build test on Fedora-40 TF runner
 
     steps:
       - name: Clone repository
@@ -240,7 +253,7 @@ jobs:
       - name: Run the tests
         uses: sclorg/testing-farm-as-github-action@v1
         with:
-          compose: Fedora-40
+          compose: ${{ matrix.runner_compose }}
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
