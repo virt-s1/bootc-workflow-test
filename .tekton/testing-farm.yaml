@@ -135,7 +135,7 @@ spec:
           skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
-          if [[ $IMAGE_NAME =~ ^rhel-bootc ]]; then
+          if [[ $IMAGE_NAME =~ ^rhel-bootc || $IMAGE_NAME =~ ^centos-bootc || $IMAGE_NAME =~ ^fedora-bootc ]]; then
             COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
             if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
               COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
