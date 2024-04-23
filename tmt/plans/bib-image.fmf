@@ -97,7 +97,7 @@ execute:
 
 /iso:
   summary: Use bib generate ISO image and test locally (nested)
-  tag: [libvirt, stable, bib]
+  tag: libvirt
   environment+:
     PLATFORM: libvirt
     IMAGE_TYPE: iso
