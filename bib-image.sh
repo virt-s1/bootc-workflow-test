@@ -123,7 +123,7 @@ sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --re
 [[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
 [[ $debug == 1 ]] && set -x
-podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --from "localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" --secret id=creds,src=./auth.json -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" examples/container-auth
+sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --from "localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" --secret id=creds,src=./auth.json -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" examples/container-auth
 
 greenprint "Push $TEST_OS installation container image"
 sudo podman push --tls-verify=false --quiet "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$TEST_IMAGE_URL"
@@ -357,6 +357,34 @@ EOF
 
         greenprint "Clean up userdata.yaml and metadata.yaml"
         rm -f userdata.yaml metadata.yaml
+        ;;
+    "to-disk")
+        greenprint "💾 Create disk.raw"
+        sudo truncate -s 10G disk.raw
+
+        greenprint "bootc install to disk.raw"
+        sudo podman run \
+            --rm \
+            --privileged \
+            --pid=host \
+            --security-opt label=type:unconfined_t \
+            -v /var/lib/containers:/var/lib/containers \
+            -v /dev:/dev \
+            -v .:/output \
+            "$TEST_IMAGE_URL" \
+            bootc install to-disk --generic-image --via-loopback /output/disk.raw
+
+        sudo qemu-img convert -f raw ./disk.raw -O qcow2 "/var/lib/libvirt/images/disk.qcow2"
+
+        greenprint "Deploy $IMAGE_TYPE instance"
+        ansible-playbook -v \
+            -i "$INVENTORY_FILE" \
+            -e test_os="$TEST_OS" \
+            -e ssh_key_pub="$SSH_KEY_PUB" \
+            -e ssh_user="$SSH_USER" \
+            -e inventory_file="$INVENTORY_FILE" \
+            -e bib="true" \
+            "playbooks/deploy-libvirt.yaml"
         ;;
     *)
         redprint "Variable IMAGE_TYPE has to be defined"
