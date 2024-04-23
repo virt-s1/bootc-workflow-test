@@ -95,21 +95,20 @@ execute:
     - how: shell
       script: curl -L -o - "https://github.com/vmware/govmomi/releases/latest/download/govc_$(uname -s)_$(uname -m).tar.gz" | sudo tar -C /usr/local/bin -xvzf - govc
 
-/iso:
+/anaconda-iso:
   summary: Use bib generate ISO image and test locally (nested)
-  tag: libvirt
+  tag: /anaconda-iso
   environment+:
     PLATFORM: libvirt
-    IMAGE_TYPE: iso
-    LAYERED_IMAGE: cloud-init
+    IMAGE_TYPE: anaconda-iso
+    LAYERED_IMAGE: useradd-ssh
   prepare+:
     - how: install
       package:
-        - python3-libvirt
-        - python3-lxml
+        - qemu-img
         - qemu-kvm
         - libvirt
-        - xorriso
+        - virt-install
   adjust+:
     - when: arch == ppc64le
       enabled: false

@@ -28,6 +28,9 @@ INVENTORY_FILE="${TEMPDIR}/inventory"
 
 REPLACE_CLOUD_USER=""
 
+# For anaconda-iso test
+FIRMWARE="${FIRMWARE:-bios}"
+
 greenprint "Login quay.io"
 sudo podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
 
@@ -59,6 +62,7 @@ yum_repos:
     gpgcheck: false
 EOF
         GUEST_ID_DC70="rhel9_64Guest"
+        BOOT_ARGS="uefi"
         ;;
     "centos")
         # work with old TEST_OS variable value centos-stream-9
@@ -71,11 +75,13 @@ EOF
             REPLACE_CLOUD_USER='RUN sed -i "s/name: cloud-user/name: ec2-user/g" /etc/cloud/cloud.cfg'
         fi
         GUEST_ID_DC70="centos9_64Guest"
+        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     "fedora")
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
+        BOOT_ARGS="uefi"
         ;;
     *)
         redprint "Variable TIER1_IMAGE_URL is not supported"
@@ -101,9 +107,13 @@ case "$ARCH" in
         ;;
 esac
 
-
 greenprint "Create ${TEST_OS} installation Containerfile"
 sed -i "s|^FROM.*|FROM $TIER1_IMAGE_URL\n$ADD_REPO\n$ADD_RHC|" "$INSTALL_CONTAINERFILE"
+
+if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
+   sed -i "s|exampleuser|$SSH_USER|g" "$INSTALL_CONTAINERFILE"
+fi
+
 tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
 RUN dnf -y clean all
 $REPLACE_CLOUD_USER
@@ -118,7 +128,11 @@ greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
 
 greenprint "Build $TEST_OS installation container image"
-sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+if [[ "$LAYERED_IMAGE" == "useradd-ssh" ]]; then
+    sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 --build-arg "sshpubkey=$(cat "${SSH_KEY_PUB}")" -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+else
+    sudo podman build --platform "$BUILD_PLATFORM" --tls-verify=false --retry=5 --retry-delay=10 -t "${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}" "$LAYERED_DIR"
+fi
 
 [[ $- =~ x ]] && debug=1 && set +x
 sed "s/REPLACE_ME/${QUAY_SECRET}/g" files/auth.template | tee auth.json > /dev/null
@@ -357,6 +371,42 @@ EOF
 
         greenprint "Clean up userdata.yaml and metadata.yaml"
         rm -f userdata.yaml metadata.yaml
+        ;;
+    "anaconda-iso")
+        greenprint "Build $TEST_OS $IMAGE_TYPE image"
+        mkdir -p output
+        sudo podman run \
+            --rm \
+            -it \
+            --privileged \
+            --pull=newer \
+            --tls-verify=false \
+            --security-opt label=type:unconfined_t \
+            -v "$(pwd)/output":/output \
+            -v /var/lib/containers/storage:/var/lib/containers/storage \
+            "$BIB_IMAGE_URL" \
+            --type "$IMAGE_TYPE" \
+            --target-arch "$ARCH" \
+            --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+            --local \
+            "$LOCAL_IMAGE_URL"
+
+        sudo mv output/bootiso/install.iso /var/lib/libvirt/images && sudo rm -rf output
+
+        greenprint "💾 Create vm qcow2 files for ISO installation"
+        sudo qemu-img create -f qcow2 "/var/lib/libvirt/images/disk.qcow2" 10G
+
+        greenprint "Deploy $IMAGE_TYPE instance"
+        ansible-playbook -v \
+            -i "$INVENTORY_FILE" \
+            -e test_os="$TEST_OS" \
+            -e ssh_key_pub="$SSH_KEY_PUB" \
+            -e ssh_user="$SSH_USER" \
+            -e inventory_file="$INVENTORY_FILE" \
+            -e bib="true" \
+            -e firmware="$FIRMWARE" \
+            -e boot_args="$BOOT_ARGS" \
+            "playbooks/deploy-libvirt.yaml"
         ;;
     "to-disk")
         greenprint "💾 Create disk.raw"
