@@ -61,7 +61,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk]
+        image_type: [ami, qcow2, vmdk, raw, to-disk]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -72,6 +72,10 @@ jobs:
             platform: libvirt
           - image_type: vmdk
             platform: vsphere
+          - image_type: raw
+            platform: libvirt
+          - image_type: to-disk
+            platform: libvirt
     runs-on: ubuntu-latest
 
     steps:
@@ -106,7 +110,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw]
+        image_type: [ami, qcow2, vmdk, raw, to-disk]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -118,6 +122,8 @@ jobs:
           - image_type: vmdk
             platform: vsphere
           - image_type: raw
+            platform: libvirt
+          - image_type: to-disk
             platform: libvirt
     runs-on: ubuntu-latest
 
@@ -153,7 +159,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw]
+        image_type: [ami, qcow2, vmdk, raw, to-disk]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -165,6 +171,8 @@ jobs:
           - image_type: vmdk
             platform: vsphere
           - image_type: raw
+            platform: libvirt
+          - image_type: to-disk
             platform: libvirt
     runs-on: ubuntu-latest
 
@@ -200,7 +208,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw]
+        image_type: [ami, qcow2, vmdk, raw, to-disk]
         build_arch: [x86_64, aarch64]
         exclude:
           - image_type: vmdk
@@ -219,6 +227,12 @@ jobs:
           - image_type: raw
             arch: aarch64
             build_arch: x86_64
+          - image_type: to-disk
+            arch: x86_64
+            build_arch: aarch64
+          - image_type: to-disk
+            arch: aarch64
+            build_arch: x86_64
         include:
           - image_type: ami
             platform: aws
@@ -227,6 +241,8 @@ jobs:
           - image_type: vmdk
             platform: vsphere
           - image_type: raw
+            platform: libvirt
+          - image_type: to-disk
             platform: libvirt
           - arch: x86_64
             build_arch: x86_64
@@ -275,7 +291,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw]
+        image_type: [ami, qcow2, vmdk, raw, to-disk]
         exclude:
           - arch: aarch64
             image_type: vmdk
@@ -287,6 +303,8 @@ jobs:
           - image_type: vmdk
             platform: vsphere
           - image_type: raw
+            platform: libvirt
+          - image_type: to-disk
             platform: libvirt
     runs-on: ubuntu-latest
 

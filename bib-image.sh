@@ -358,6 +358,34 @@ EOF
         greenprint "Clean up userdata.yaml and metadata.yaml"
         rm -f userdata.yaml metadata.yaml
         ;;
+    "to-disk")
+        greenprint "💾 Create disk.raw"
+        sudo truncate -s 10G disk.raw
+
+        greenprint "bootc install to disk.raw"
+        sudo podman run \
+            --rm \
+            --privileged \
+            --pid=host \
+            --security-opt label=type:unconfined_t \
+            -v /var/lib/containers:/var/lib/containers \
+            -v /dev:/dev \
+            -v .:/output \
+            "$TEST_IMAGE_URL" \
+            bootc install to-disk --generic-image --via-loopback /output/disk.raw
+
+        sudo qemu-img convert -f raw ./disk.raw -O qcow2 "/var/lib/libvirt/images/disk.qcow2"
+
+        greenprint "Deploy $IMAGE_TYPE instance"
+        ansible-playbook -v \
+            -i "$INVENTORY_FILE" \
+            -e test_os="$TEST_OS" \
+            -e ssh_key_pub="$SSH_KEY_PUB" \
+            -e ssh_user="$SSH_USER" \
+            -e inventory_file="$INVENTORY_FILE" \
+            -e bib="true" \
+            "playbooks/deploy-libvirt.yaml"
+        ;;
     *)
         redprint "Variable IMAGE_TYPE has to be defined"
         exit 1
