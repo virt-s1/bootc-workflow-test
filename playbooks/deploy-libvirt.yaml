@@ -12,6 +12,8 @@
     instance_name: "bootc-{{ test_os }}"
     image_path: "/var/lib/libvirt/images"
     bib: "false"
+    firmware: ""
+    boot_args: ""
     os_variant:
       centos-stream-9: centos-stream9
       rhel-9-5: rhel9-unknown
@@ -89,6 +91,7 @@
       loop:
         - user-data
         - meta-data
+      when: firmware == ""
 
     # virt-install with --cloud-init always shutdown vm on the first reboot
     # https://github.com/virt-manager/virt-manager/issues/497
