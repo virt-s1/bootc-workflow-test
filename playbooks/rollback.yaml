@@ -9,6 +9,13 @@
     - name: bootc rollback
       command: bootc rollback
       become: true
+      ignore_errors: true
+      register: result_bootc_rollback
+
+    - name: rpm-ostree rollback
+      command: rpm-ostree rollback
+      become: true
+      when: result_bootc_rollback is failed
 
     # 20 minutes reboot timeout is for aws ec2 bare instance test
     - name: Reboot to deploy new system
