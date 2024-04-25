@@ -17,7 +17,7 @@ if [[ ${TIER1_IMAGE_URL} =~ bootc-image-builder ]]; then
     BIB_IMAGE_URL=$TIER1_IMAGE_URL
     TIER1_IMAGE_URL=${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}
 else
-    BIB_IMAGE_URL="${BIB_IMAGE_URL:-quay.io/centos-bootc/bootc-image-builder:latest}"
+    BIB_IMAGE_URL="${BIB_IMAGE_URL:-registry-proxy.engineering.redhat.com/rh-osbs/rhel9-rhel_bootc-image-builder:rhel-9.4}"
 fi
 LAYERED_IMAGE="${LAYERED_IMAGE-cloud-init}"
 LAYERED_DIR="examples/$LAYERED_IMAGE"
