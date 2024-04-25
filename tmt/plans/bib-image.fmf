@@ -109,6 +109,7 @@ execute:
         - qemu-kvm
         - libvirt
         - virt-install
+        - lorax
   adjust+:
     - when: arch == ppc64le
       enabled: false
