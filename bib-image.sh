@@ -391,7 +391,37 @@ EOF
             --local \
             "$LOCAL_IMAGE_URL"
 
-        sudo mv output/bootiso/install.iso /var/lib/libvirt/images && sudo rm -rf output
+        ISOMOUNT=$(mktemp -d)
+
+        greenprint "Mounting install.iso -> $ISOMOUNT"
+        sudo mount -v -o ro "output/bootiso/install.iso" "$ISOMOUNT"
+
+        NEW_KS_FILE="${TEMPDIR}/bib.ks"
+
+        greenprint "Default osbuild-base.ks"
+        cat "${ISOMOUNT}/osbuild-base.ks"
+        greenprint "Default osbuild.ks"
+        cat "${ISOMOUNT}/osbuild.ks"
+
+        greenprint "Preparing modified kickstart file"
+        cat > "$NEW_KS_FILE" << EOFKS
+text
+$(cat "${ISOMOUNT}/osbuild-base.ks")
+$(cat "${ISOMOUNT}/osbuild.ks")
+EOFKS
+        sed -i '/%include/d' "$NEW_KS_FILE"
+
+        greenprint "Writing new ISO"
+        sudo mkksiso -c "console=ttyS0,115200" --ks "$NEW_KS_FILE" "output/bootiso/install.iso" "/var/lib/libvirt/images/install.iso"
+
+        greenprint "==== NEW KICKSTART FILE ===="
+        cat "$NEW_KS_FILE"
+        greenprint "============================"
+
+        greenprint "Clean up ISO building environment"
+        sudo umount -v "$ISOMOUNT"
+        rm -rf "$ISOMOUNT"
+        sudo rm -rf output
 
         greenprint "💾 Create vm qcow2 files for ISO installation"
         sudo qemu-img create -f qcow2 "/var/lib/libvirt/images/disk.qcow2" 10G
