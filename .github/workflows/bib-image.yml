@@ -66,6 +66,8 @@ jobs:
         exclude:
           - arch: aarch64
             image_type: vmdk
+          - image_type: anaconda-iso
+            firmware: image
         include:
           - image_type: ami
             platform: aws
@@ -127,6 +129,8 @@ jobs:
         exclude:
           - arch: aarch64
             image_type: vmdk
+          - image_type: anaconda-iso
+            firmware: image
         include:
           - image_type: ami
             platform: aws
@@ -188,6 +192,8 @@ jobs:
         exclude:
           - arch: aarch64
             image_type: vmdk
+          - image_type: anaconda-iso
+            firmware: image
         include:
           - image_type: ami
             platform: aws
@@ -248,6 +254,8 @@ jobs:
         build_arch: [x86_64, aarch64]
         firmware: [image]
         exclude:
+          - image_type: anaconda-iso
+            firmware: image
           - image_type: vmdk
             arch: aarch64
           - image_type: vmdk
@@ -350,6 +358,8 @@ jobs:
         exclude:
           - arch: aarch64
             image_type: vmdk
+          - image_type: anaconda-iso
+            firmware: image
         include:
           - image_type: ami
             platform: aws
