@@ -17,7 +17,7 @@ if [[ ${TIER1_IMAGE_URL} =~ bootc-image-builder ]]; then
     BIB_IMAGE_URL=$TIER1_IMAGE_URL
     TIER1_IMAGE_URL=${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}
 else
-    if [[ "$REDHAT_ID" == "rhel" ]]; then
+    if [[ "$REDHAT_VERSION_ID" == "9.4" ]]; then
         BIB_IMAGE_URL="${BIB_IMAGE_URL:-${RHEL_REGISTRY_URL}/rhel9-rhel_bootc-image-builder:rhel-${REDHAT_VERSION_ID}}"
     else
         BIB_IMAGE_URL="${BIB_IMAGE_URL:-quay.io/centos-bootc/bootc-image-builder:latest}"
