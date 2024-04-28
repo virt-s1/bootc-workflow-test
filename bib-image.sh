@@ -34,6 +34,7 @@ REPLACE_CLOUD_USER=""
 
 # For anaconda-iso test
 FIRMWARE="${FIRMWARE:-bios}"
+TEST_IMAGE_NAME="bootc-workflow-test"
 
 greenprint "Login quay.io"
 sudo podman login -u "${QUAY_USERNAME}" -p "${QUAY_PASSWORD}" quay.io
@@ -42,6 +43,9 @@ case "$REDHAT_ID" in
     "rhel")
         # work with old TEST_OS variable value rhel-9-x
         TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/\./-/')
+        # RHEL image can be saved in private repo only
+        TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
+        LOCAL_IMAGE_URL="localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         SSH_USER="cloud-user"
         sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
         ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
@@ -71,6 +75,7 @@ EOF
     "centos")
         # work with old TEST_OS variable value centos-stream-9
         TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/-/-stream-/')
+        TEST_IMAGE_URL="quay.io/bootc-test/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         SSH_USER="cloud-user"
         ADD_REPO=""
         ADD_RHC=""
@@ -82,6 +87,7 @@ EOF
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     "fedora")
+        TEST_IMAGE_URL="quay.io/bootc-test/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
@@ -92,10 +98,6 @@ EOF
         exit 1
         ;;
 esac
-
-TEST_IMAGE_NAME="bootc-workflow-test"
-TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
-LOCAL_IMAGE_URL="localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
 
 greenprint "Configure container build arch"
 case "$ARCH" in
@@ -173,24 +175,45 @@ case "$IMAGE_TYPE" in
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         AMI_NAME="bootc-bib-${TEST_OS}-${ARCH}-${QUAY_REPO_TAG}"
         AWS_BUCKET_NAME="bootc-bib-images-test"
-        sudo podman run \
-            --rm \
-            -it \
-            --privileged \
-            --pull=newer \
-            --tls-verify=false \
-            --security-opt label=type:unconfined_t \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
-            --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
-            "$BIB_IMAGE_URL" \
-            --type ami \
-            --target-arch "$ARCH" \
-            --aws-ami-name "$AMI_NAME" \
-            --aws-bucket "$AWS_BUCKET_NAME" \
-            --aws-region "$AWS_REGION" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+        # To build RHEL image - private image, --local and localhost image have to be used
+        if [[ "$REDHAT_ID" == "rhel" ]]; then
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                "$BIB_IMAGE_URL" \
+                --type ami \
+                --target-arch "$ARCH" \
+                --aws-ami-name "$AMI_NAME" \
+                --aws-bucket "$AWS_BUCKET_NAME" \
+                --aws-region "$AWS_REGION" \
+                --local \
+                "$LOCAL_IMAGE_URL"
+        else
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                --env AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+                --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+                "$BIB_IMAGE_URL" \
+                --type ami \
+                --target-arch "$ARCH" \
+                --aws-ami-name "$AMI_NAME" \
+                --aws-bucket "$AWS_BUCKET_NAME" \
+                --aws-region "$AWS_REGION" \
+                "$TEST_IMAGE_URL"
+        fi
 
         greenprint "Get uploaded AMI ID and snapshot ID"
         AMI_ID=$(
@@ -212,21 +235,39 @@ case "$IMAGE_TYPE" in
     "qcow2"|"raw")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         mkdir -p output
-        sudo podman run \
-            --rm \
-            -it \
-            --privileged \
-            --pull=newer \
-            --tls-verify=false \
-            --security-opt label=type:unconfined_t \
-            -v "$(pwd)/output":/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            "$BIB_IMAGE_URL" \
-            --type "$IMAGE_TYPE" \
-            --target-arch "$ARCH" \
-            --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+        # To build RHEL image - private image, --local and localhost image have to be used
+        if [[ "$REDHAT_ID" == "rhel" ]]; then
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type "$IMAGE_TYPE" \
+                --target-arch "$ARCH" \
+                --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                --local \
+                "$LOCAL_IMAGE_URL"
+        else
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type "$IMAGE_TYPE" \
+                --target-arch "$ARCH" \
+                --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                "$TEST_IMAGE_URL"
+        fi
 
         if [[ "$IMAGE_TYPE" == "raw" ]]; then
             qemu-img convert -f raw output/image/disk.raw -O qcow2 output/image/disk.qcow2
@@ -249,20 +290,37 @@ case "$IMAGE_TYPE" in
         mkdir -p output
 
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
-        sudo podman run \
-            --rm \
-            -it \
-            --privileged \
-            --pull=newer \
-            --tls-verify=false \
-            --security-opt label=type:unconfined_t \
-            -v "$(pwd)/output":/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            "$BIB_IMAGE_URL" \
-            --type vmdk \
-            --target-arch "$ARCH" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+        # To build RHEL image - private image, --local and localhost image have to be used
+        if [[ "$REDHAT_ID" == "rhel" ]]; then
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type vmdk \
+                --target-arch "$ARCH" \
+                --local \
+                "$LOCAL_IMAGE_URL"
+        else
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type vmdk \
+                --target-arch "$ARCH" \
+                "$TEST_IMAGE_URL"
+        fi
 
         greenprint "Deploy $IMAGE_TYPE instance"
         DATACENTER_70="Datacenter7.0"
@@ -379,21 +437,39 @@ EOF
     "anaconda-iso")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
         mkdir -p output
-        sudo podman run \
-            --rm \
-            -it \
-            --privileged \
-            --pull=newer \
-            --tls-verify=false \
-            --security-opt label=type:unconfined_t \
-            -v "$(pwd)/output":/output \
-            -v /var/lib/containers/storage:/var/lib/containers/storage \
-            "$BIB_IMAGE_URL" \
-            --type "$IMAGE_TYPE" \
-            --target-arch "$ARCH" \
-            --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
-            --local \
-            "$LOCAL_IMAGE_URL"
+        # To build RHEL image - private image, --local and localhost image have to be used
+        if [[ "$REDHAT_ID" == "rhel" ]]; then
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type "$IMAGE_TYPE" \
+                --target-arch "$ARCH" \
+                --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                --local \
+                "$LOCAL_IMAGE_URL"
+        else
+            sudo podman run \
+                --rm \
+                -it \
+                --privileged \
+                --pull=newer \
+                --tls-verify=false \
+                --security-opt label=type:unconfined_t \
+                -v "$(pwd)/output":/output \
+                -v /var/lib/containers/storage:/var/lib/containers/storage \
+                "$BIB_IMAGE_URL" \
+                --type "$IMAGE_TYPE" \
+                --target-arch "$ARCH" \
+                --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                "$TEST_IMAGE_URL"
+        fi
 
         ISOMOUNT=$(mktemp -d)
 
