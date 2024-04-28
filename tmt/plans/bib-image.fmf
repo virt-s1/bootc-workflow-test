@@ -97,8 +97,9 @@ execute:
 
 /anaconda-iso:
   summary: Use bib generate ISO image and test locally (nested)
-  tag: /anaconda-iso
+  tag: [anaconda-iso, stable, bib]
   environment+:
+    FIRMWARE: uefi
     PLATFORM: libvirt
     IMAGE_TYPE: anaconda-iso
     LAYERED_IMAGE: useradd-ssh
@@ -111,7 +112,7 @@ execute:
         - virt-install
         - lorax
   adjust+:
-    - when: arch == ppc64le
+    - when: arch != x86_64 and arch != aarch64
       enabled: false
     - when: arch == x86_64 or arch == aarch64
       provision+:
@@ -124,7 +125,7 @@ execute:
 
 /to-disk:
   summary: Use bib generate raw image and test locally (nested)
-  tag: to-disk
+  tag: [to-disk, stable]
   environment+:
     PLATFORM: libvirt
     IMAGE_TYPE: to-disk
