@@ -8,7 +8,7 @@ jobs:
   update_ami:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+      - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
 
       - name: Get current date
         id: date
@@ -19,7 +19,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@9153d834b60caba6d51c9b9510b087acf9f33f83 # v6
+        uses: peter-evans/create-pull-request@6d6857d36972b65feb161a90e484f2984215f83e # v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "test: update CS9 ami image - ${{ steps.date.outputs.date }}"
