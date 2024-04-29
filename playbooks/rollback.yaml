@@ -63,6 +63,8 @@
           when:
             - air_gapped_dir | default('') == ""
             - "'localhost' not in result_bootc_status.stdout"
+          # workaround bug https://issues.redhat.com/browse/RHEL-34641
+          ignore_errors: true
 
         - name: check installed package
           shell: rpm -qa | sort
