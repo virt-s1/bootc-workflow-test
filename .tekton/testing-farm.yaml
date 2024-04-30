@@ -132,7 +132,7 @@ spec:
           skopeo inspect docker://"$IMAGE" > skopeo_inspect.json
           IMAGE_NAME=$(echo "${IMAGE##*/}" | cut -d @ -f 1)
           IMAGE_TAG=$(echo "${IMAGE##*/}" | cut -d : -f 2)
-          skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
+          skopeo copy --dest-creds "${QUAY_USERNAME}":"${QUAY_PASSWORD}" --multi-arch all docker://"$IMAGE" docker://quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
           if [[ $IMAGE_NAME =~ ^rhel-bootc || $IMAGE_NAME =~ ^centos-bootc || $IMAGE_NAME =~ ^fedora-bootc ]]; then
