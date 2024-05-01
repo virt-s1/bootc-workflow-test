@@ -18,7 +18,11 @@ jobs:
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
             endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda')) }}
+            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda')) ||
+            endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-anaconda') ||
+            endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-anaconda')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Query author repository permissions
@@ -207,6 +211,84 @@ jobs:
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
           variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
+
+  fedora-40-anaconda:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-anaconda')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        partition: [standard, lvm, btrfs]
+        firmware: [bios, uefi]
+        exclude:
+          - firmware: bios
+            arch: aarch64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: Fedora-40
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-fedora-40-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
+          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
+          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }};TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
+
+  fedora-41-anaconda:
+    needs: pr-info
+    if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
+            (endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-anaconda')) }}
+    continue-on-error: true
+    strategy:
+      matrix:
+        arch: [x86_64, aarch64]
+        partition: [standard, lvm, btrfs]
+        firmware: [bios, uefi]
+        exclude:
+          - firmware: bios
+            arch: aarch64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
+        with:
+          ref: ${{ needs.pr-info.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Run the tests
+        uses: sclorg/testing-farm-as-github-action@v1
+        with:
+          compose: Fedora-40
+          api_key: ${{ secrets.TF_API_KEY }}
+          git_url: ${{ needs.pr-info.outputs.repo_url }}
+          git_ref: ${{ needs.pr-info.outputs.ref }}
+          arch: ${{ matrix.arch }}
+          tmt_context: "arch=${{ matrix.arch }}"
+          update_pull_request_status: true
+          pull_request_status_name: "bootc-fedora-41-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
+          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          tf_scope: private
+          secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
+          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }};TIER1_IMAGE_URL=${{ vars.FEDORA_41_TIER1_IMAGE_URL }}"
 
   rhel9y-snapshot-anaconda:
     needs: pr-info

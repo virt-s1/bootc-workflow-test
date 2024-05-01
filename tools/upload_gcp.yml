@@ -1,0 +1,71 @@
+---
+# How to run this playbook
+# GCP_SERVICE_ACCOUNT_FILE=gcp-sa.json GCP_PROJECT=project ARCH=x86_64 TEST_OS=fedora-40 ansible-playbook -v tools/upload_gcp_image.yml
+
+- hosts: localhost
+  gather_facts: no
+  become: no
+  vars:
+    gcp_storage_bucket_name: "bootc-image"
+    gcp_service_account_file: "{{ lookup('env', 'GCP_SERVICE_ACCOUNT_FILE') }}"
+    gcp_project: "{{ lookup('env', 'GCP_PROJECT') }}"
+    arch: "{{ lookup('env', 'ARCH') }}"
+    test_os: "{{ lookup('env', 'TEST_OS') }}"
+    image_url:
+      fedora-41: "https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/{{ arch }}/images"
+      fedora-40: "https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/{{ arch }}/images"
+    # image name must be a match of regex '[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?|[1-9][0-9]{0,19}'
+    arch_for_image_name:
+      x86_64: "x86-64"
+      aarch64: "aarch64"
+    gcp_image_name:
+      fedora-41: "bootc-fedora-41-{{ arch_for_image_name[arch] }}"
+      fedora-40: "bootc-fedora-40-{{ arch_for_image_name[arch] }}"
+
+  tasks:
+    - name: get latest Fedora images
+      shell: curl -s {{ image_url[test_os] }}/ | grep -ioE '>Fedora-Cloud-Base-GCE.*.tar.gz<' | tr -d '><'
+      register: result_file
+      when: "'fedora' in test_os"
+
+    - set_fact:
+        image_file_name: "{{ result_file.stdout }}"
+      when:
+        - "'fedora' in test_os"
+        - result_file.changed
+
+    - name: download image
+      get_url:
+        url: "{{ image_url[test_os] }}/{{ image_file_name }}"
+        dest: /tmp/
+
+    - name: gcloud/gsutil - authorizing with a service account
+      command: |
+        /usr/bin/gcloud auth activate-service-account \
+          --key-file="{{ gcp_service_account_file }}"
+
+    - name: create a bucket
+      command: |
+        /usr/bin/gcloud storage buckets create \
+          gs://{{ gcp_storage_bucket_name }} \
+          --project {{ gcp_project }}
+
+    - name: "get MD5 checksum of {{ image_file_name }}"
+      command: "/usr/bin/gsutil hash -m /tmp/{{ image_file_name }}"
+      register: result_image_md5
+
+    - set_fact:
+        md5_checksum: "{{ result_image_md5.stdout.split('\t\t')[-1] }}"
+
+    - name: "upload {{image_file_name}} to gs://{{ gcp_storage_bucket_name }}"
+      command: /usr/bin/gsutil -h Content-MD5:{{ md5_checksum }} cp /tmp/{{ image_file_name }} gs://{{ gcp_storage_bucket_name }}
+
+    - name: "create new {{ gcp_image_name[test_os] }}"
+      command: /usr/bin/gcloud compute images create {{ gcp_image_name[test_os] }} --source-uri gs://{{ gcp_storage_bucket_name }}/{{ image_file_name }} --guest-os-features="UEFI_COMPATIBLE,GVNIC,SEV_CAPABLE,VIRTIO_SCSI_MULTIQUEUE" --project={{ gcp_project }} --labels "project=bootc,test_os={{ test_os }},arch={{ arch }}"
+
+    - name: "delete bucket {{ gcp_storage_bucket_name }}"
+      command: |
+        /usr/bin/gcloud storage rm \
+          --recursive \
+          gs://{{ gcp_storage_bucket_name }} \
+          --project {{ gcp_project }}
