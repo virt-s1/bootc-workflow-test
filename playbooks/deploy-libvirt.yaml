@@ -18,6 +18,7 @@
       centos-stream-9: centos-stream9
       rhel-9-5: rhel9-unknown
       rhel-9-4: rhel9-unknown
+      fedora-40: fedora-unknown
 
   tasks:
     - set_fact:
@@ -56,6 +57,19 @@
         - "'rhel' in test_os"
         - bib == "false"
 
+    - name: Get Fedora-Cloud-Base-Generic image filename
+      block:
+        - name: Get CentOS-Stream-GenericCloud image filename
+          shell: curl -s https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/{{ arch }}/images/ | grep -ioE '>Fedora-Cloud-Base-Generic.*.qcow2' | tr -d '><'
+          register: out
+
+        - set_fact:
+            download_image_name: "{{ out.stdout }}"
+            rhel_guest_image_fname: "{{ instance_name }}.qcow2"
+      when:
+        - test_os == "fedora-40"
+        - bib == "false"
+
     - name: Download CentOS-Stream-GenericCloud image
       get_url:
         url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ download_image_name }}"
@@ -74,6 +88,16 @@
       become: true
       when:
         - "'rhel' in test_os"
+        - bib == "false"
+
+    - name: Download Fedora-Cloud-Base-Generic
+      get_url:
+        url: "https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/{{ arch }}/images/{{ download_image_name }}"
+        dest: "{{ image_path }}/{{ rhel_guest_image_fname }}"
+        validate_certs: false
+      become: true
+      when:
+        - test_os == "fedora-40"
         - bib == "false"
 
     - set_fact:

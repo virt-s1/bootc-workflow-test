@@ -97,12 +97,18 @@ case "$REDHAT_ID" in
         CUT_DIRS=6
         ;;
     "fedora")
+        TEST_OS="${REDHAT_ID}-${REDHAT_VERSION_ID}"
         ADD_REPO=""
         ADD_RHC=""
-        BOOT_LOCATION="https://odcs.fedoraproject.org/composes/production/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
-        OS_VARIANT="fedora-rawhide"
-        BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
-        CUT_DIRS=7
+        if [[ "$REDHAT_VERSION_ID" == "40" ]]; then
+            BOOT_LOCATION="https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Everything/${ARCH}/os/"
+            OS_VARIANT="fedora-unknown"
+        else
+            BOOT_LOCATION="https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Everything/${ARCH}/os/"
+            OS_VARIANT="fedora-rawhide"
+        fi
+        BOOT_ARGS="uefi"
+        CUT_DIRS=8
         ;;
     *)
         redprint "Variable TIER1_IMAGE_URL is not supported"
@@ -180,30 +186,21 @@ zerombr
 clearpart --all --initlabel --disklabel=gpt
 STOPHERE
 
-if [[ "$PARTITION" == "lvm" ]]; then
-    if [[ "$FIRMWARE" == "bios" ]]; then
-        greenprint "BIOS LVM partition setup"
-        tee -a "$KS_FILE" > /dev/null << EOF
-part biosboot --size=1 --fstype=biosboot
-part /boot --size=1000 --fstype=ext4 --label=boot
-part pv.01 --grow
-volgroup bootc pv.01
-logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
-EOF
-    else
-        greenprint "UEFI LVM partition setup"
-        tee -a "$KS_FILE" > /dev/null << EOF
-part /boot/efi --size=100  --fstype=efi
-part /boot     --size=1000  --fstype=ext4 --label=boot
-part pv.01 --grow
-volgroup bootc pv.01
-logvol / --vgname=bootc --fstype=xfs --size=10000 --name=root
-EOF
-    fi
-else
-    greenprint "Standard partition setup"
-    echo "autopart --nohome --noswap --type=plain --fstype=xfs" >> "$KS_FILE"
-fi
+case "$PARTITION" in
+    "standard")
+        echo "autopart --nohome --type=plain --fstype=xfs" >> "$KS_FILE"
+        ;;
+    "lvm")
+        echo "autopart --nohome --type=lvm --fstype=xfs" >> "$KS_FILE"
+        ;;
+    "btrfs")
+        echo "autopart --nohome --type=btrfs" >> "$KS_FILE"
+        ;;
+    *)
+        redprint "Variable PARTITION has to be defined"
+        exit 1
+        ;;
+esac
 
 greenprint "Configure console log file"
 VIRT_LOG="/tmp/${TEST_OS}-${FIRMWARE}-${PARTITION}-console.log"
@@ -258,10 +255,15 @@ EOF
                       --wait \
                       --noreboot
 else
-    greenprint "Download boot.iso"
-    curl -O "${BOOT_LOCATION}images/boot.iso"
-    sudo mv boot.iso /var/lib/libvirt/images
-    LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+    if [[ "$REDHAT_ID" == "fedora" ]] && [[ "$ARCH" == "aarch64" ]]; then
+        greenprint "Let's use URL as bootlocation"
+        LOCAL_BOOT_LOCATION="$BOOT_LOCATION"
+    else
+        greenprint "Download boot.iso"
+        curl -O "${BOOT_LOCATION}images/boot.iso"
+        sudo mv boot.iso /var/lib/libvirt/images
+        LOCAL_BOOT_LOCATION="/var/lib/libvirt/images/boot.iso"
+    fi
 
     if [[ "$FIRMWARE" == "bios" ]]; then
         greenprint "Install $TEST_OS via anaconda on $FIRMWARE VM"
@@ -409,7 +411,7 @@ if [[ "$ARCH" == "x86_64" ]] && [[ "$FIRMWARE" == "uefi" ]] && [[ "$PARTITION" =
     sudo rm -rf "${HTTPD_PATH}/httpboot"
     sudo rm -f "${HTTPD_PATH}/ks.cfg"
 else
-    sudo rm -f "$LOCAL_BOOT_LOCATION"
+    sudo rm -f "/var/lib/libvirt/images/boot.iso"
 fi
 
 greenprint "🎉 All tests passed."

@@ -12,11 +12,15 @@
       rhel-9-4: RedHatEnterpriseLinux9
       rhel-9-5: RedHatEnterpriseLinux9
       centos-stream-9: CentOSStream9
+      fedora-40: Fedora40
+      fedora-41: Fedorarawhide
     beaker_compose:
       # avoid rhel-9.4.0-updates-2024xxxx.xx
       rhel-9-4: rhel-9.4.0-20
       rhel-9-5: rhel-9.5.0-20
       centos-stream-9: CentOS-Stream-9
+      fedora-40: Fedora-40
+      fedora-41: Fedora-Rawhide
 
   tasks:
     - name: "get latest {{ beaker_family[test_os] }} distro"

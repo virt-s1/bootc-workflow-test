@@ -1,0 +1,45 @@
+---
+# How to run this playbook
+# OS_USERNAME=foobar OS_PASSWORD=foobar OS_PROJECT_NAME=foobar OS_AUTH_URL=https://api.foobar.com:13000 OS_USER_DOMAIN_NAME=foobar.com OS_PROJECT_DOMAIN_NAME=foobar.com TEST_OS=fedora-40 ansible-playbook -v tools/upload_openstack.yml
+- hosts: localhost
+  gather_facts: no
+  become: no
+  vars:
+    test_os: "{{ lookup('env', 'TEST_OS') }}"
+    image_url:
+      fedora-41: https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/x86_64/images
+      fedora-40: https://dl.fedoraproject.org/pub/fedora/linux/releases/40/Cloud/x86_64/images
+    openstack_image_name:
+      fedora-40: bootc-fedora-40
+      fedora-41: bootc-fedora-41
+    os_distro:
+      fedora-40: fedora
+      fedora-41: fedora
+
+  tasks:
+    - name: get latest Fedora images
+      shell: curl -s {{ image_url[test_os] }}/ | grep -ioE '>Fedora-Cloud-Base-Generic.*.qcow2<' | tr -d '><'
+      register: result_file
+      when: "'fedora' in test_os"
+
+    - set_fact:
+        image_file_name: "{{ result_file.stdout }}"
+      when:
+        - "'fedora' in test_os"
+        - result_file.changed
+
+    - name: download image
+      get_url:
+        url: "{{ image_url[test_os] }}/{{ image_file_name }}"
+        dest: /tmp/
+
+    - name: "upload new {{ test_os }} openstack image"
+      command: |
+        openstack --insecure image create \
+          --file /tmp/{{ image_file_name }} \
+          --disk-format qcow2 \
+          --private \
+          --property architecture=x86_64 \
+          --property os_distro={{ os_distro[test_os] }} \
+          --property hw_rng_model=virtio \
+          {{ openstack_image_name[test_os] }}

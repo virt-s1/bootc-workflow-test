@@ -89,10 +89,12 @@ EOF
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         ;;
     "fedora")
+        TEST_OS="${REDHAT_ID}-${REDHAT_VERSION_ID}"
         TEST_IMAGE_URL="quay.io/bootc-test/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
+        GUEST_ID_DC70="fedora64Guest"
         BOOT_ARGS="uefi"
         ;;
     *)
@@ -198,6 +200,13 @@ case "$IMAGE_TYPE" in
                 --local \
                 "$LOCAL_IMAGE_URL"
         else
+            greenprint "Configure rootfs randomly"
+            ROOTFS_LIST=( \
+                "ext4" \
+                "xfs" \
+            )
+            RND_LINE=$((RANDOM % 2))
+            ROOTFS="${ROOTFS_LIST[$RND_LINE]}"
             sudo podman run \
                 --rm \
                 -it \
@@ -214,7 +223,7 @@ case "$IMAGE_TYPE" in
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
-                --rootfs xfs \
+                --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
 

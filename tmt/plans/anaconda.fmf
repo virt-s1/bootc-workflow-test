@@ -48,6 +48,15 @@ execute:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
 
+/anaconda-uefi-btrfs:
+  summary: Run anaconda test locally (nested)
+  environment+:
+    FIRMWARE: uefi
+    PARTITION: btrfs
+  adjust+:
+    - when: arch != x86_64 and arch != aarch64
+      enabled: false
+
 /anaconda-bios-lvm:
   summary: Run anaconda test locally (nested)
   environment+:
@@ -63,6 +72,16 @@ execute:
   environment+:
     FIRMWARE: bios
     PARTITION: standard
+  adjust+:
+    - when: arch != x86_64
+      enabled: false
+
+/anaconda-bios-btrfs:
+  summary: Run anaconda test locally (nested)
+  tag: stable
+  environment+:
+    FIRMWARE: bios
+    PARTITION: btrfs
   adjust+:
     - when: arch != x86_64
       enabled: false

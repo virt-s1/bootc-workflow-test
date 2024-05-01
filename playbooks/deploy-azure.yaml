@@ -14,6 +14,13 @@
     vm_size:
       x86_64: Standard_D2ads_v5
       aarch64: Standard_D2pds_v5
+    fedora_community_gallery_image_name:
+      fedora-40:
+        x86_64: Fedora-Cloud-40-x64
+        aarch64: Fedora-Cloud-40-Arm64
+      fedora-41:
+        x86_64: Fedora-Cloud-41-x64
+        aarch64: Fedora-Cloud-41-Arm64
     bib: "false"
 
   tasks:
@@ -138,9 +145,24 @@
           --query "[?tags.project=='bootc' && tags.test_os=='{{ test_os }}' && tags.arch=='{{ arch }}']  | [0].id" \
           --output tsv
       register: image_id_result
+      when: "'fedora' not in test_os"
 
     - set_fact:
         image_id: "{{ image_id_result.stdout }}"
+      when: "'fedora' not in test_os"
+
+    - name: Get Fedora image ID
+      shell: |
+        az sig image-version list-community \
+          --public-gallery-name fedora-5e266ba4-2250-406d-adad-5d73860d958f \
+          --gallery-image-definition {{ fedora_community_gallery_image_name[test_os][arch] }} \
+          --location {{ location }} | jq -r '.[-1].uniqueId'
+      register: image_id_result
+      when: "'fedora' in test_os"
+
+    - set_fact:
+        image_id: "{{ image_id_result.stdout }}"
+      when: "'fedora' in test_os"
 
     - name: Create storage account for boot diagnose
       shell: |
@@ -181,6 +203,7 @@
           --eviction-policy Delete \
           --size {{ vm_size[arch] }} \
           --image {{ image_id }} \
+          --accept-term \
           --boot-diagnostics-storage {{ sa_name }} \
           --user-data "{{ playbook_dir }}/azure-user-data" \
           --generate-ssh-keys \

@@ -80,7 +80,8 @@
          {{ test_image_url }} \
          bootc install to-existing-root"
       become: true
-      when: "'0.1.7' not in result_bootc_version.stdout"
+      when:
+        - "'0.1.7' not in result_bootc_version.stdout"
 
     - name: Install image with boot-0.1.7
       command:
@@ -94,7 +95,8 @@
          {{ test_image_url }} \
          bootc install to-filesystem --replace=alongside /target"
       become: true
-      when: "'0.1.7' in result_bootc_version.stdout"
+      when:
+        - "'0.1.7' in result_bootc_version.stdout"
 
     # 20 minutes reboot timeout is for aws ec2 bare instance test
     - name: Reboot to deploy new system

@@ -5,6 +5,7 @@
   vars:
     test_os: ""
     arch: "{{ lookup('env', 'ARCH') | default('x86_64', true) }}"
+    ssh_user: "cloud-user"
     flavor:
       x86_64: "n2-standard-2"
       aarch64: "t2a-standard-1"
@@ -24,25 +25,24 @@
         --key-file={{ lookup('env', 'GCP_SERVICE_ACCOUNT_FILE') }}"
 
     - name: Create gcp key file
-      shell: sed "s/ssh-rsa/cloud-user:ssh-rsa/" "{{ ssh_key_pub }}" > "{{ ssh_key_pub }}.gcp_key"
-      when: "'centos' in test_os or 'rhel' in test_os"
+      shell: sed "s/ssh-rsa/{{ ssh_user }}:ssh-rsa/" "{{ ssh_key_pub }}" > "{{ ssh_key_pub }}.gcp_key"
 
     - set_fact:
         image_args: "--image-family=centos-stream-9 --image-project=centos-cloud"
       when: "'centos' in test_os"
 
-    - name: Get RHEL GCP image name
+    - name: Get GCP image name
       shell: |
         /usr/bin/gcloud compute images list \
           --project={{ lookup('env', 'GCP_PROJECT') }} \
           --filter="labels.project=bootc AND labels.test_os={{ test_os }} AND labels.arch={{ arch }}" \
           --format json | jq -r '.[0].name'
       register: result_image_name
-      when: "'rhel' in test_os"
+      when: "'rhel' in test_os or 'fedora' in test_os"
 
     - set_fact:
         image_args: "--image={{ result_image_name.stdout }}"
-      when: "'rhel' in test_os"
+      when: "'rhel' in test_os or 'fedora' in test_os"
 
     - name: Create gcp instance
       command:
@@ -50,7 +50,7 @@
           --zone=us-central1-a \
           --machine-type={{ flavor[arch] }} \
           --boot-disk-auto-delete \
-          --boot-disk-size=80GB \
+          --boot-disk-size=20GB \
           --metadata-from-file=ssh-keys={{ ssh_key_pub }}.gcp_key \
           --metadata=block-project-ssh-keys=TRUE \
           --provisioning-model=SPOT \

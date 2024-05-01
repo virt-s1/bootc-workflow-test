@@ -70,9 +70,15 @@ EOF
         fi
         ;;
     "fedora")
+        TEST_OS="${REDHAT_ID}-${REDHAT_VERSION_ID}"
         SSH_USER="fedora"
         ADD_REPO=""
         ADD_RHC=""
+        if [[ "$REDHAT_VERSION_ID" == "40" ]]; then
+            sed "s/REPLACE_DISTRO/fedora-40/" files/copr-coreos-continuous.template | tee "${LAYERED_DIR}"/copr-coreos-continuous.repo > /dev/null
+        else
+            sed "s/REPLACE_DISTRO/fedora-rawhide/" files/copr-coreos-continuous.template | tee "${LAYERED_DIR}"/copr-coreos-continuous.repo > /dev/null
+        fi
         ;;
     *)
         redprint "Variable TIER1_IMAGE_URL is not supported"
@@ -135,6 +141,14 @@ COPY auth.json /etc/ostree/auth.json
 $USER_CONFIG
 $REPLACE_CLOUD_USER
 EOF
+
+greenprint "Add bootupd workaround for Fedora aarch64 shim"
+if [[ "$REDHAT_ID" == "fedora" ]]; then
+    tee -a "$INSTALL_CONTAINERFILE" > /dev/null << EOF
+COPY copr-coreos-continuous.repo /etc/yum.repos.d/
+RUN dnf -y upgrade bootupd
+EOF
+fi
 
 greenprint "Check $TEST_OS installation Containerfile"
 cat "$INSTALL_CONTAINERFILE"
