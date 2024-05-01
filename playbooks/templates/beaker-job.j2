@@ -11,7 +11,7 @@ user --name={{ ssh_user }} --groups=wheel --iscrypted
 sshkey --username={{ ssh_user }} "{{ lookup('ansible.builtin.file', ssh_key_pub) }}"
 zerombr
 clearpart --all --initlabel --disklabel=gpt
-autopart --type=lvm --fstype=xfs
+autopart --nohome --type=lvm --fstype=xfs
 %packages
 podman
 python3
