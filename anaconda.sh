@@ -89,7 +89,9 @@ case "$REDHAT_ID" in
         TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/-/-stream-/')
         ADD_REPO=""
         ADD_RHC=""
-        BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
+        # BOOT_LOCATION="https://composes.stream.centos.org/development/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
+        # compose in centos-bootc image does not exist any more, use latest-CentOS-Stream instead
+        BOOT_LOCATION="https://composes.stream.centos.org/development/latest-CentOS-Stream/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="centos-stream9"
         BOOT_ARGS="uefi,firmware.feature0.name=secure-boot,firmware.feature0.enabled=no"
         CUT_DIRS=6
