@@ -214,6 +214,7 @@ case "$IMAGE_TYPE" in
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
+                --rootfs xfs \
                 "$TEST_IMAGE_URL"
         fi
 
