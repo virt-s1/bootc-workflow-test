@@ -18,7 +18,7 @@ jobs:
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-anaconda') ||
             endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda')) ||
+            endsWith(github.event.comment.body, '/test-cs9-dev-anaconda') ||
             endsWith(github.event.comment.body, '/test-fedora-40') ||
             endsWith(github.event.comment.body, '/test-fedora-40-anaconda') ||
             endsWith(github.event.comment.body, '/test-fedora-41') ||
