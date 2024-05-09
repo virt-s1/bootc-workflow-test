@@ -177,11 +177,12 @@
       when: fstype != "btrfs"
 
     # btrfs defines subvolume /root in fedora
+    # but for bootc install to-disk will set btrfs subvolume /
     - name: /var mount point checking - btrfs
       block:
         - assert:
             that:
-              - result_var_mount_point.stdout == var_mount_path
+              - (result_var_mount_point.stdout == var_mount_path_1) or (result_var_mount_point.stdout == var_mount_path_2))
             fail_msg: "/var does not mount on {{ var_mount_path }}"
             success_msg: "/var mounts on {{ var_mount_path }}"
       always:
@@ -192,7 +193,8 @@
           set_fact:
             failed_counter: "{{ failed_counter | int + 1 }}"
       vars:
-        var_mount_path: "{{ device_name }}[/root/ostree/deploy/{{ osname }}/var]"
+        var_mount_path_1: "{{ device_name }}[/root/ostree/deploy/{{ osname }}/var]"
+        var_mount_path_2: "{{ device_name }}[/ostree/deploy/{{ osname }}/var]"
       when: fstype == "btrfs"
 
     # case: check /var mount status
