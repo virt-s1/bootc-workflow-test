@@ -183,8 +183,8 @@
         - assert:
             that:
               - (result_var_mount_point.stdout == var_mount_path_1) or (result_var_mount_point.stdout == var_mount_path_2))
-            fail_msg: "/var does not mount on {{ var_mount_path }}"
-            success_msg: "/var mounts on {{ var_mount_path }}"
+            fail_msg: "/var does not mount on {{ var_mount_path_1 }} or {{ var_mount_path_2 }}"
+            success_msg: "/var mounts on {{ var_mount_path_1 }} or {{ var_mount_path_2 }}"
       always:
         - set_fact:
             total_counter: "{{ total_counter | int + 1 }}"
