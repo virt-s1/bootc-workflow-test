@@ -18,7 +18,11 @@ jobs:
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-bib-image') ||
             endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-bib-image')) }}
+            endsWith(github.event.comment.body, '/test-cs9-dev-bib-image')) ||
+            endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-bib-image') ||
+            endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-bib-image')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Query author repository permissions
@@ -354,11 +358,11 @@ jobs:
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
           variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
 
-  f40-bib-image:
+  fedora-40-bib-image:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-f40') ||
-            endsWith(github.event.comment.body, '/test-f40-bib-image')) }}
+            (endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-bib-image')) }}
     continue-on-error: true
     strategy:
       matrix:
@@ -418,11 +422,11 @@ jobs:
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
           variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }};TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
 
-  f41-bib-image:
+  fedora-41-bib-image:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-f41') ||
-            endsWith(github.event.comment.body, '/test-f41-bib-image')) }}
+            (endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-bib-image')) }}
     continue-on-error: true
     strategy:
       matrix:
