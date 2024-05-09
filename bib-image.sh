@@ -174,6 +174,15 @@ EOF
 greenprint "Prepare ansible.cfg"
 export ANSIBLE_CONFIG="${PWD}/playbooks/ansible.cfg"
 
+# bib does not support btrfs yet
+greenprint "Configure rootfs randomly"
+ROOTFS_LIST=( \
+    "ext4" \
+    "xfs" \
+)
+RND_LINE=$((RANDOM % 2))
+ROOTFS="${ROOTFS_LIST[$RND_LINE]}"
+
 case "$IMAGE_TYPE" in
     "ami")
         greenprint "Build $TEST_OS $IMAGE_TYPE image"
@@ -200,13 +209,6 @@ case "$IMAGE_TYPE" in
                 --local \
                 "$LOCAL_IMAGE_URL"
         else
-            greenprint "Configure rootfs randomly"
-            ROOTFS_LIST=( \
-                "ext4" \
-                "xfs" \
-            )
-            RND_LINE=$((RANDOM % 2))
-            ROOTFS="${ROOTFS_LIST[$RND_LINE]}"
             sudo podman run \
                 --rm \
                 -it \
@@ -278,6 +280,7 @@ case "$IMAGE_TYPE" in
                 --type "$IMAGE_TYPE" \
                 --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
 
@@ -331,6 +334,7 @@ case "$IMAGE_TYPE" in
                 "$BIB_IMAGE_URL" \
                 --type vmdk \
                 --target-arch "$ARCH" \
+                --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
 
@@ -480,6 +484,7 @@ EOF
                 --type "$IMAGE_TYPE" \
                 --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
+                --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
 
@@ -531,6 +536,10 @@ EOFKS
             "playbooks/deploy-libvirt.yaml"
         ;;
     "to-disk")
+        if [[ "$REDHAT_ID" == "fedora" ]]; then
+            ROOTFS="btrfs"
+        fi
+
         greenprint "💾 Create disk.raw"
         sudo truncate -s 10G disk.raw
 
@@ -544,7 +553,7 @@ EOFKS
             -v /dev:/dev \
             -v .:/output \
             "$TEST_IMAGE_URL" \
-            bootc install to-disk --generic-image --via-loopback /output/disk.raw
+            bootc install to-disk --filesystem "$ROOTFS" --generic-image --via-loopback /output/disk.raw
 
         sudo qemu-img convert -f raw ./disk.raw -O qcow2 "/var/lib/libvirt/images/disk.qcow2"
 
