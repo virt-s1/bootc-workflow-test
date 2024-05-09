@@ -18,7 +18,11 @@ jobs:
             endsWith(github.event.comment.body, '/test-cs9') ||
             endsWith(github.event.comment.body, '/test-cs9-replace') ||
             endsWith(github.event.comment.body, '/test-cs9-dev') ||
-            endsWith(github.event.comment.body, '/test-cs9-dev-replace')) }}
+            endsWith(github.event.comment.body, '/test-cs9-dev-replace')) ||
+            endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-replace') ||
+            endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-replace')) }}
     runs-on: ubuntu-latest
     steps:
       - name: Query author repository permissions
@@ -219,8 +223,8 @@ jobs:
   fedora-40-replace:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-f40') ||
-            endsWith(github.event.comment.body, '/test-f40-replace')) }}
+            (endsWith(github.event.comment.body, '/test-fedora-40') ||
+            endsWith(github.event.comment.body, '/test-fedora-40-replace')) }}
     continue-on-error: true
     strategy:
       matrix:
@@ -257,8 +261,8 @@ jobs:
   fedora-41-replace:
     needs: pr-info
     if: ${{ needs.pr-info.outputs.allowed_user == 'true' && github.event.issue.pull_request &&
-            (endsWith(github.event.comment.body, '/test-f41') ||
-            endsWith(github.event.comment.body, '/test-f41-replace')) }}
+            (endsWith(github.event.comment.body, '/test-fedora-41') ||
+            endsWith(github.event.comment.body, '/test-fedora-41-replace')) }}
     continue-on-error: true
     strategy:
       matrix:
