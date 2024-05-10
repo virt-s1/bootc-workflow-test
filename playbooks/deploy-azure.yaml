@@ -19,8 +19,8 @@
         x86_64: Fedora-Cloud-40-x64
         aarch64: Fedora-Cloud-40-Arm64
       fedora-41:
-        x86_64: Fedora-Cloud-41-x64
-        aarch64: Fedora-Cloud-41-Arm64
+        x86_64: Fedora-Cloud-Rawhide-x64
+        aarch64: Fedora-Cloud-Rawhide-Arm64
     bib: "false"
 
   tasks:

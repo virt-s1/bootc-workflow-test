@@ -6,13 +6,21 @@ TEMPDIR=$(mktemp -d)
 trap 'rm -rf -- "$TEMPDIR"' EXIT
 
 UNIQUE_STRING=$(tr -dc a-z0-9 < /dev/urandom | head -c 4 ; echo '')
-if [[ "$TEST_OS" == "rhel-9-4" ]]; then
-    IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/${ARCH}/images"
-elif [[ "$TEST_OS" == "rhel-9-5" ]]; then
-    IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/BaseOS/${ARCH}/images"
-fi
+case "$TEST_OS" in
+    rhel-9-4)
+        IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/updates/RHEL-9/latest-RHEL-9.4.0/compose/BaseOS/${ARCH}/images"
+        IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">rhel-ec2-.*.${ARCH}.raw.xz<" | tr -d '><')
+    ;;
+    rhel-9-5)
+        IMAGE_URL="http://${DOWNLOAD_NODE}/rhel-9/nightly/RHEL-9/latest-RHEL-9.5.0/compose/BaseOS/${ARCH}/images"
+        IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">rhel-ec2-.*.${ARCH}.raw.xz<" | tr -d '><')
+    ;;
+    fedora-41)
+        IMAGE_URL="https://dl.fedoraproject.org/pub/fedora/linux/development/rawhide/Cloud/${ARCH}/images"
+        IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">Fedora-Cloud-Base-AmazonEC2.*.raw.xz<" | tr -d '><')
+    ;;
+esac
 
-IMAGE_FILE=$(curl -s "${IMAGE_URL}/" | grep -ioE ">rhel-ec2-.*.${ARCH}.raw.xz<" | tr -d '><')
 curl -s -O --output-dir "$TEMPDIR" "${IMAGE_URL}/${IMAGE_FILE}"
 
 sudo dnf install -y xz curl wget jq

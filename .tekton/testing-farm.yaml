@@ -140,10 +140,13 @@ spec:
             REDHAT_VERSION_ID=$(jq -r '.Labels."redhat.version-id"' skopeo_inspect.json)
             if [[ "${REDHAT_ID}" == "rhel" ]]; then
               COMPOSE=RHEL-${REDHAT_VERSION_ID}.0-Nightly
+              DISTRO=rhel
             elif [[ "${REDHAT_ID}" == "centos" ]]; then
               COMPOSE=CentOS-Stream-${REDHAT_VERSION_ID}
+              DISTRO=centos-stream
             else
               COMPOSE=Fedora-Rawhide
+              DISTRO=fedora
             fi
           elif [[ $IMAGE_NAME =~ ^bootc-image-builder ]]; then
             BASE_IMAGE_NAME=$(jq -r '.Labels.name' skopeo_inspect.json)
@@ -195,6 +198,7 @@ spec:
           --compose "${COMPOSE}" \
           --arch "${ARCH}" \
           --context "arch=${ARCH}" \
+          --context "distro=${DISTRO}" \
           --timeout "${TIMEOUT}"
       # default to 60m, extend to 90m
       # https://tekton.dev/docs/pipelines/tasks/#specifying-a-timeout

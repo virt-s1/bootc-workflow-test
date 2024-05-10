@@ -1,15 +1,15 @@
 #!/bin/bash
 
 virt-install \
-{% if firmware == '' %}
-    --import \
-{% endif %}
     --name {{ instance_name }} \
     --ram 3072 \
     --vcpus 2 \
     --os-variant {{ os_variant[test_os] }} \
     --network default \
     --disk size=10,path="{{ image_path }}/{{ rhel_guest_image_fname }}" \
+{% if bib_firmware == 'uefi' %}
+    --boot {{ boot_args }} \
+{% endif %}
 {% if firmware == 'bios' %}
     --cdrom "{{ image_path }}/install.iso" \
     --noreboot \
@@ -19,7 +19,8 @@ virt-install \
     --boot {{ boot_args }} \
 {% endif %}
 {% if firmware == '' %}
-    --cloud-init user-data="{{ playbook_dir }}/libvirt-user-data",meta-data="{{ playbook_dir }}/libvirt-meta-data",disable=on \
+    --cdrom "{{ image_path }}/seed.iso" \
+    --install no_install=yes \
 {% endif %}
 {% if bib == 'false' %}
     --filesystem={{ air_gapped_dir }},mount_tag,driver.type=virtiofs,accessmode=passthrough \

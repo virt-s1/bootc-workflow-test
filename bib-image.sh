@@ -34,8 +34,6 @@ INVENTORY_FILE="${TEMPDIR}/inventory"
 
 REPLACE_CLOUD_USER=""
 
-# For anaconda-iso test
-FIRMWARE="${FIRMWARE:-bios}"
 TEST_IMAGE_NAME="bootc-workflow-test"
 
 greenprint "Login quay.io"
@@ -104,16 +102,22 @@ EOF
 esac
 
 greenprint "Configure container build arch"
-case "$ARCH" in
+if [[ "$CROSS_ARCH" == "True" ]]; then
+    if [[ "$ARCH" == "x86_64" ]]; then
+        BUILD_ARCH="aarch64"
+    else
+        BUILD_ARCH="x86_64"
+    fi
+else
+    BUILD_ARCH="$ARCH"
+fi
+
+case "$BUILD_ARCH" in
     "x86_64")
         BUILD_PLATFORM="linux/amd64"
         ;;
     "aarch64")
         BUILD_PLATFORM="linux/arm64"
-        ;;
-    *)
-        redprint "Variable ARCH has to be defined"
-        exit 1
         ;;
 esac
 
@@ -202,7 +206,7 @@ case "$IMAGE_TYPE" in
                 --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
                 "$BIB_IMAGE_URL" \
                 --type ami \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
@@ -221,7 +225,7 @@ case "$IMAGE_TYPE" in
                 --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
                 "$BIB_IMAGE_URL" \
                 --type ami \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
@@ -262,7 +266,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --local \
                 "$LOCAL_IMAGE_URL"
@@ -278,7 +282,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
@@ -287,8 +291,16 @@ case "$IMAGE_TYPE" in
         if [[ "$IMAGE_TYPE" == "raw" ]]; then
             qemu-img convert -f raw output/image/disk.raw -O qcow2 output/image/disk.qcow2
             sudo mv output/image/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
+            # raw image will run test on bios vm for x86_64
+            if [[ "$ARCH" == "x86_64" ]]; then
+                BIB_FIRMWARE=bios
+            else
+                BIB_FIRMWARE=uefi
+            fi
         else
             sudo mv output/qcow2/disk.qcow2 /var/lib/libvirt/images && sudo rm -rf output
+            # qcow2 image will run test on uefi vm
+            BIB_FIRMWARE=uefi
         fi
 
         greenprint "Deploy $IMAGE_TYPE instance"
@@ -299,6 +311,8 @@ case "$IMAGE_TYPE" in
             -e ssh_user="$SSH_USER" \
             -e inventory_file="$INVENTORY_FILE" \
             -e bib="true" \
+            -e boot_args="$BOOT_ARGS" \
+            -e bib_firmware="$BIB_FIRMWARE" \
             "playbooks/deploy-libvirt.yaml"
         ;;
     "vmdk")
@@ -318,7 +332,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type vmdk \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --local \
                 "$LOCAL_IMAGE_URL"
         else
@@ -333,7 +347,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type vmdk \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
@@ -466,7 +480,7 @@ EOF
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --local \
                 "$LOCAL_IMAGE_URL"
@@ -482,7 +496,7 @@ EOF
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$ARCH" \
+                --target-arch "$BUILD_ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
@@ -523,6 +537,17 @@ EOFKS
         greenprint "💾 Create vm qcow2 files for ISO installation"
         sudo qemu-img create -f qcow2 "/var/lib/libvirt/images/disk.qcow2" 10G
 
+        if [[ "$ARCH" == "x86_64" ]]; then
+            FIRMWARE_LIST=( \
+                "bios" \
+                "uefi" \
+            )
+            RND_LINE=$((RANDOM % 2))
+            FIRMWARE="${FIRMWARE_LIST[$RND_LINE]}"
+        else
+            FIRMWARE="uefi"
+        fi
+
         greenprint "Deploy $IMAGE_TYPE instance"
         ansible-playbook -v \
             -i "$INVENTORY_FILE" \
@@ -556,6 +581,18 @@ EOFKS
             bootc install to-disk --filesystem "$ROOTFS" --generic-image --via-loopback /output/disk.raw
 
         sudo qemu-img convert -f raw ./disk.raw -O qcow2 "/var/lib/libvirt/images/disk.qcow2"
+        rm -f disk.raw
+
+        if [[ "$ARCH" == "x86_64" ]]; then
+            BIB_FIRMWARE_LIST=( \
+                "bios" \
+                "uefi" \
+            )
+            RND_LINE=$((RANDOM % 2))
+            BIB_FIRMWARE="${BIB_FIRMWARE_LIST[$RND_LINE]}"
+        else
+            BIB_FIRMWARE="uefi"
+        fi
 
         greenprint "Deploy $IMAGE_TYPE instance"
         ansible-playbook -v \
@@ -565,6 +602,8 @@ EOFKS
             -e ssh_user="$SSH_USER" \
             -e inventory_file="$INVENTORY_FILE" \
             -e bib="true" \
+            -e boot_args="$BOOT_ARGS" \
+            -e bib_firmware="$BIB_FIRMWARE" \
             "playbooks/deploy-libvirt.yaml"
         ;;
     *)
