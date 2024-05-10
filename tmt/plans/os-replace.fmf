@@ -27,7 +27,11 @@ execute:
       enabled: false
   prepare+:
     - how: shell
-      script: dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+      script: |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+            dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        fi
     - how: install
       package:
         - python3-openstackclient
@@ -46,6 +50,10 @@ execute:
         - google-cloud-cli
   adjust+:
     - when: arch != x86_64 and arch != aarch64
+      enabled: false
+    - when: arch == aarch64 and distro == rhel
+      enabled: false
+    - when: arch == aarch64 and distro == centos-stream
       enabled: false
 
 /aws:
@@ -70,6 +78,10 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
+    - when: arch == aarch64 and distro == rhel
+      enabled: false
+    - when: arch == aarch64 and distro == centos-stream
+      enabled: false
   prepare+:
     - how: shell
       script: |
@@ -85,11 +97,19 @@ execute:
     LAYERED_IMAGE: qemu-guest-agent
     AIR_GAPPED: 1
   prepare+:
+    - how: shell
+      script: |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+            # EPEL for genisoimage
+            dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        fi
     - how: install
       package:
         - qemu-kvm
         - libvirt
         - virt-install
+        - genisoimage
   adjust+:
     - when: arch == ppc64le
       enabled: false

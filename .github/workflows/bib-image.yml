@@ -65,36 +65,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -104,21 +74,22 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # bib cross arch build needs Fedora runner to install qemu-user-static
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
-          compose: RHEL-9.5.0-Nightly
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel95-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-rhel95-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL95_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   rhel94-bib-image:
     needs: pr-info
@@ -129,36 +100,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -168,21 +109,22 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # bib cross arch build needs Fedora runner to install qemu-user-static
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
-          compose: RHEL-9.4.0-Nightly
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-rhel94-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL94_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   cs9-bib-image:
     needs: pr-info
@@ -193,36 +135,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -232,21 +144,22 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # bib cross arch build needs Fedora runner to install qemu-user-static
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
-          compose: CentOS-Stream-9
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-cs9-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   cs9-dev-bib-image:
     needs: pr-info
@@ -257,81 +170,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        build_arch: [x86_64, aarch64]
-        firmware: [image]
-        exclude:
-          - image_type: anaconda-iso
-            firmware: image
-          - image_type: vmdk
-            arch: aarch64
-          - image_type: vmdk
-            build_arch: aarch64
-          - image_type: qcow2
-            arch: x86_64
-            build_arch: aarch64
-          - image_type: qcow2
-            arch: aarch64
-            build_arch: x86_64
-          - image_type: raw
-            arch: x86_64
-            build_arch: aarch64
-          - image_type: raw
-            arch: aarch64
-            build_arch: x86_64
-          - image_type: to-disk
-            arch: x86_64
-            build_arch: aarch64
-          - image_type: to-disk
-            arch: aarch64
-            build_arch: x86_64
-          - image_type: anaconda-iso
-            arch: x86_64
-            build_arch: aarch64
-          - image_type: anaconda-iso
-            arch: aarch64
-            build_arch: x86_64
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            build_arch: x86_64
-            firmware: bios
-            runner_compose: RHEL-9.5.0-Nightly
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            build_arch: x86_64
-            firmware: uefi
-            runner_compose: RHEL-9.5.0-Nightly
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            build_arch: aarch64
-            firmware: uefi
-            runner_compose: RHEL-9.5.0-Nightly
-          - arch: x86_64
-            build_arch: x86_64
-            runner_compose: RHEL-9.5.0-Nightly
-          - arch: aarch64
-            build_arch: aarch64
-            runner_compose: RHEL-9.5.0-Nightly
-          - arch: x86_64
-            build_arch: aarch64
-            runner_compose: Fedora-40
-          - arch: aarch64
-            build_arch: x86_64
-            runner_compose: Fedora-40
     runs-on: ubuntu-latest
     # Only run cross-build test on Fedora-40 TF runner
 
@@ -342,21 +180,22 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # bib cross arch build needs Fedora runner to install qemu-user-static
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
-          compose: ${{ matrix.runner_compose }}
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
-          arch: ${{ matrix.build_arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          arch: ${{ matrix.arch }}
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}-on-${{ matrix.build_arch }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-cs9-dev-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"
 
   fedora-40-bib-image:
     needs: pr-info
@@ -367,36 +206,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -407,20 +216,20 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-fedora-40-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-fedora-40-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }};TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
 
   fedora-41-bib-image:
     needs: pr-info
@@ -431,36 +240,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -471,20 +250,20 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-fedora-41-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-fedora-41-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }};TIER1_IMAGE_URL=${{ vars.FEDORA_41_TIER1_IMAGE_URL }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;TIER1_IMAGE_URL=${{ vars.FEDORA_41_TIER1_IMAGE_URL }}"
 
   rhel9y-snapshot-bib-image:
     needs: pr-info
@@ -495,36 +274,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        image_type: [ami, qcow2, vmdk, raw, anaconda-iso, to-disk]
-        firmware: [image]
-        exclude:
-          - arch: aarch64
-            image_type: vmdk
-          - image_type: anaconda-iso
-            firmware: image
-        include:
-          - image_type: ami
-            platform: aws
-          - image_type: qcow2
-            platform: libvirt
-          - image_type: vmdk
-            platform: vsphere
-          - image_type: raw
-            platform: libvirt
-          - image_type: to-disk
-            platform: libvirt
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: bios
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: x86_64
-            firmware: uefi
-          - image_type: anaconda-iso
-            platform: libvirt
-            arch: aarch64
-            firmware: uefi
     runs-on: ubuntu-latest
 
     steps:
@@ -534,18 +283,19 @@ jobs:
           ref: ${{ needs.pr-info.outputs.sha }}
           fetch-depth: 0
 
+      # bib cross arch build needs Fedora runner to install qemu-user-static
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
-          compose: RHEL-9.4.0-Nightly
+          compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel9y-snapshot-${{ matrix.arch }}-bib-${{ matrix.image_type }}-${{ matrix.firmware }}"
-          tmt_plan_regex: "${{ matrix.image_type }}"
+          pull_request_status_name: "bootc-rhel9y-snapshot-bib-${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL9Y_SNAPSHOT_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
-          variables: "PLATFORM=${{ matrix.platform }};ARCH=${{ matrix.arch }};IMAGE_TYPE=${{ matrix.image_type }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1;FIRMWARE=${{ matrix.firmware }}"
+          variables: "ARCH=${{ matrix.arch }};AWS_REGION=${{ secrets.AWS_REGION }};GOVC_INSECURE=1"

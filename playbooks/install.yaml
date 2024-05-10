@@ -31,7 +31,7 @@
           - podman
         state: present
       become: true
-      when: ('rhel' not in test_os) or (platform != 'aws')
+      when: ('rhel' not in test_os and test_os != 'fedora-41') or (platform != 'aws' and test_os != 'fedora-41')
 
     - name: Install podman from internal
       dnf:
@@ -44,6 +44,12 @@
       when:
         - "'rhel' in test_os"
         - platform == "aws"
+
+    # ansible dnf5 module needs python3-libdnf5
+    - name: Install podman on fedora-41(dnf5)
+      command: dnf -y install podman
+      become: true
+      when: test_os == 'fedora-41'
 
     - name: Auth for private image
       command:

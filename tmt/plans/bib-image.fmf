@@ -20,6 +20,7 @@ execute:
   summary: Use bib generate ami image and test on AWS
   tag: aws
   environment+:
+    CROSS_ARCH: False
     PLATFORM: aws
     IMAGE_TYPE: ami
     LAYERED_IMAGE: cloud-init
@@ -30,19 +31,58 @@ execute:
     - how: shell
       script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
 
+/ami-aarch64-on-x86:
+  summary: Use bib generate aarch64 ami image on x86_64 machine
+  tag: aws
+  environment+:
+    CROSS_ARCH: True
+    PLATFORM: aws
+    IMAGE_TYPE: ami
+    LAYERED_IMAGE: cloud-init
+  adjust+:
+    - when: arch != x86_64
+      enabled: false
+  prepare+:
+    - how: shell
+      script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
+
+/ami-x86-on-aarch64:
+  summary: Use bib generate x86_64 ami image on aarch64 machine
+  tag: aws
+  environment+:
+    CROSS_ARCH: True
+    PLATFORM: aws
+    IMAGE_TYPE: ami
+    LAYERED_IMAGE: cloud-init
+  adjust+:
+    - when: arch != aarch64
+      enabled: false
+  prepare+:
+    - how: shell
+      script: curl "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o "awscliv2.zip" && unzip awscliv2.zip && ./aws/install
+
 /qcow2:
   summary: Use bib generate qcow2 image and test locally (nested)
   tag: [libvirt, stable, bib]
   environment+:
+    CROSS_ARCH: False
     PLATFORM: libvirt
     IMAGE_TYPE: qcow2
     LAYERED_IMAGE: cloud-init
   prepare+:
+    - how: shell
+      script: |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+            # EPEL for genisoimage
+            dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        fi
     - how: install
       package:
         - qemu-kvm
         - libvirt
         - virt-install
+        - genisoimage
   adjust+:
     - when: arch == ppc64le
       enabled: false
@@ -59,16 +99,25 @@ execute:
   summary: Use bib generate raw image and test locally (nested)
   tag: [libvirt, stable, bib]
   environment+:
+    CROSS_ARCH: False
     PLATFORM: libvirt
     IMAGE_TYPE: raw
     LAYERED_IMAGE: cloud-init
   prepare+:
+    - how: shell
+      script: |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+            # EPEL for genisoimage
+            dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        fi
     - how: install
       package:
         - qemu-img
         - qemu-kvm
         - libvirt
         - virt-install
+        - genisoimage
   adjust+:
     - when: arch == ppc64le
       enabled: false
@@ -85,6 +134,7 @@ execute:
   summary: Use bib generate vmdk image and test on vsphere
   tag: vmdk
   environment+:
+    CROSS_ARCH: False
     PLATFORM: vmdk
     IMAGE_TYPE: vmdk
     LAYERED_IMAGE: vmware
@@ -99,7 +149,7 @@ execute:
   summary: Use bib generate ISO image and test locally (nested)
   tag: [anaconda-iso, stable, bib]
   environment+:
-    FIRMWARE: uefi
+    CROSS_ARCH: False
     PLATFORM: libvirt
     IMAGE_TYPE: anaconda-iso
     LAYERED_IMAGE: useradd-ssh
@@ -127,16 +177,25 @@ execute:
   summary: Use bib generate raw image and test locally (nested)
   tag: [to-disk, stable]
   environment+:
+    CROSS_ARCH: False
     PLATFORM: libvirt
     IMAGE_TYPE: to-disk
     LAYERED_IMAGE: cloud-init
   prepare+:
+    - how: shell
+      script: |
+        source /etc/os-release
+        if [[ "$ID" == "rhel" ]] || [[ "$ID" == "centos" ]]; then
+            # EPEL for genisoimage
+            dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+        fi
     - how: install
       package:
         - qemu-img
         - qemu-kvm
         - libvirt
         - virt-install
+        - genisoimage
   adjust+:
     - when: arch == ppc64le
       enabled: false

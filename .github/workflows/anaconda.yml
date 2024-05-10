@@ -65,11 +65,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -80,7 +75,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: RHEL-9.5.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
@@ -89,11 +84,10 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel95-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-rhel95-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL95_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};CERT_URL=${{ secrets.CERT_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   rhel94-anaconda:
     needs: pr-info
@@ -104,11 +98,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -119,7 +108,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
@@ -128,11 +117,10 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel94-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-rhel94-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL94_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};CERT_URL=${{ secrets.CERT_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   cs9-anaconda:
     needs: pr-info
@@ -143,11 +131,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -158,7 +141,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
@@ -167,11 +150,10 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-cs9-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
-          variables: "TEST_OS=centos-stream-9;FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   cs9-dev-anaconda:
     needs: pr-info
@@ -182,11 +164,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -197,7 +174,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
@@ -206,11 +183,10 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-cs9-dev-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-cs9-dev-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
 
   fedora-40-anaconda:
     needs: pr-info
@@ -221,11 +197,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm, btrfs]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -236,7 +207,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
@@ -245,11 +216,11 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-fedora-40-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-fedora-40-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }};TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
+          variables: "TIER1_IMAGE_URL=${{ vars.FEDORA_40_TIER1_IMAGE_URL }}"
 
   fedora-41-anaconda:
     needs: pr-info
@@ -260,11 +231,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm, btrfs]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -275,7 +241,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: Fedora-40
           api_key: ${{ secrets.TF_API_KEY }}
@@ -284,11 +250,11 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-fedora-41-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-fedora-41-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};CERT_URL=${{ secrets.CERT_URL }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }};TIER1_IMAGE_URL=${{ vars.FEDORA_41_TIER1_IMAGE_URL }}"
+          variables: "TIER1_IMAGE_URL=${{ vars.FEDORA_41_TIER1_IMAGE_URL }}"
 
   rhel9y-snapshot-anaconda:
     needs: pr-info
@@ -299,11 +265,6 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, aarch64]
-        partition: [standard, lvm]
-        firmware: [bios, uefi]
-        exclude:
-          - firmware: bios
-            arch: aarch64
     runs-on: ubuntu-latest
 
     steps:
@@ -314,7 +275,7 @@ jobs:
           fetch-depth: 0
 
       - name: Run the tests
-        uses: sclorg/testing-farm-as-github-action@v1
+        uses: sclorg/testing-farm-as-github-action@v2
         with:
           compose: RHEL-9.4.0-Nightly
           api_key: ${{ secrets.TF_API_KEY }}
@@ -323,8 +284,7 @@ jobs:
           arch: ${{ matrix.arch }}
           tmt_context: "arch=${{ matrix.arch }}"
           update_pull_request_status: true
-          pull_request_status_name: "bootc-rhel9y-snapshot-${{ matrix.arch }}-anaconda-${{ matrix.firmware }}-${{ matrix.partition }}"
-          tmt_plan_regex: "${{ matrix.firmware }}-${{ matrix.partition }}"
+          pull_request_status_name: "bootc-rhel9y-snapshot-anaconda-${{ matrix.arch }}"
+          tmt_plan_regex: "/anaconda/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL9Y_SNAPSHOT_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }};CERT_URL=${{ secrets.CERT_URL }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }}"
-          variables: "FIRMWARE=${{ matrix.firmware }};PARTITION=${{ matrix.partition }}"
