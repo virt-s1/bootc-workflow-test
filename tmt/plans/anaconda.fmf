@@ -78,7 +78,6 @@ execute:
 
 /anaconda-bios-btrfs:
   summary: Run anaconda test locally (nested)
-  tag: stable
   environment+:
     FIRMWARE: bios
     PARTITION: btrfs
