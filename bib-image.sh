@@ -49,7 +49,7 @@ case "$REDHAT_ID" in
         TEST_IMAGE_URL="quay.io/redhat_emp1/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         LOCAL_IMAGE_URL="localhost/${TEST_IMAGE_NAME}:${QUAY_REPO_TAG}"
         SSH_USER="cloud-user"
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_BATCH_COMPOSE/${BATCH_COMPOSE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s|REPLACE_BATCH_COMPOSE|${BATCH_COMPOSE}|; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
         ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
         ADD_RHC="RUN dnf install -y rhc"
         if [[ "$PLATFORM" == "aws" ]]; then

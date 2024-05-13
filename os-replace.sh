@@ -35,7 +35,7 @@ case "$REDHAT_ID" in
         # work with old TEST_OS variable value rhel-9-x
         TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/\./-/')
         SSH_USER="cloud-user"
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_BATCH_COMPOSE/${BATCH_COMPOSE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s|REPLACE_BATCH_COMPOSE|${BATCH_COMPOSE}|; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee "${LAYERED_DIR}"/rhel-9-y.repo > /dev/null
         ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
         ADD_RHC="RUN dnf install -y rhc"
         if [[ "$PLATFORM" == "aws" ]]; then
