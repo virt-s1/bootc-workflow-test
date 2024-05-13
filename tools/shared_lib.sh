@@ -69,4 +69,15 @@ function image_inspect {
         REDHAT_VERSION_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.version-id"')
         CURRENT_COMPOSE_ID=$(skopeo inspect --tls-verify=false "docker://${TIER1_IMAGE_URL}" | jq -r '.Labels."redhat.compose-id"')
     fi
+    # shellcheck disable=SC2034
+    if [[ -n ${CURRENT_COMPOSE_ID} ]]; then
+        if [[ ${CURRENT_COMPOSE_ID} == *-updates-* ]]; then
+            BATCH_COMPOSE="updates/"
+        else
+            BATCH_COMPOSE=""
+        fi
+    else
+        BATCH_COMPOSE="updates/"
+        CURRENT_COMPOSE_ID=latest-RHEL-$REDHAT_VERSION_ID
+    fi
 }
