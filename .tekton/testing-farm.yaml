@@ -136,11 +136,12 @@ spec:
           IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
           if [[ $IMAGE_NAME =~ ^rhel-bootc || $IMAGE_NAME =~ ^centos-bootc || $IMAGE_NAME =~ ^fedora-bootc ]]; then
-            COMPOSE_ID=$(jq -r '.Labels."redhat.compose-id"' skopeo_inspect.json)
-            if [[ "${COMPOSE_ID}" == "RHEL-"* ]]; then
-              COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^RHEL-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*')-Nightly
-            elif [[ "${COMPOSE_ID}" == "CentOS-Stream-"* ]]; then
-              COMPOSE=$(echo "${COMPOSE_ID}" | grep -o '^CentOS-Stream-[0-9][0-9]*')
+            REDHAT_ID=$(jq -r '.Labels.redhat.id' skopeo_inspect.json)
+            REDHAT_VERSION_ID=$(jq -r '.Labels."redhat.version-id"' skopeo_inspect.json)
+            if [[ "${REDHAT_ID}" == "rhel" ]]; then
+              COMPOSE=RHEL-${REDHAT_VERSION_ID}.0-Nightly
+            elif [[ "${REDHAT_ID}" == "centos" ]]; then
+              COMPOSE=CentOS-Stream-${REDHAT_VERSION_ID}
             else
               COMPOSE=Fedora-Rawhide
             fi
