@@ -76,7 +76,7 @@ case "$REDHAT_ID" in
     "rhel")
         # work with old TEST_OS variable value rhel-9-x
         TEST_OS=$(echo "${REDHAT_ID}-${REDHAT_VERSION_ID}" | sed 's/\./-/')
-        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s/REPLACE_BATCH_COMPOSE/${BATCH_COMPOSE}/; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee rhel-9-y.repo > /dev/null
+        sed "s/REPLACE_ME/${DOWNLOAD_NODE}/; s|REPLACE_BATCH_COMPOSE|${BATCH_COMPOSE}|; s/REPLACE_COMPOSE_ID/${CURRENT_COMPOSE_ID}/" files/rhel-9-y.template | tee rhel-9-y.repo > /dev/null
         ADD_REPO="COPY rhel-9-y.repo /etc/yum.repos.d/rhel-9-y.repo"
         ADD_RHC="RUN dnf install -y rhc"
         BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/${BATCH_COMPOSE}RHEL-9/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
