@@ -82,7 +82,12 @@ case "$REDHAT_ID" in
         BOOT_LOCATION="http://${DOWNLOAD_NODE}/rhel-9/nightly/${BATCH_COMPOSE}RHEL-9/${CURRENT_COMPOSE_ID}/compose/BaseOS/${ARCH}/os/"
         OS_VARIANT="rhel9-unknown"
         BOOT_ARGS="uefi"
-        CUT_DIRS=8
+        # BATCH_COMPOSE will be "" or "updates/"
+        if [[ "$BATCH_COMPOSE" == "" ]]; then
+            CUT_DIRS=8
+        else
+            CUT_DIRS=9
+        fi
         ;;
     "centos")
         # work with old TEST_OS variable value centos-stream-9
