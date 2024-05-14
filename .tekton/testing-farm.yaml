@@ -136,7 +136,7 @@ spec:
           IMAGE_URL=quay.io/redhat_emp1/qe-"${IMAGE_NAME}:${IMAGE_TAG}"
           echo "$IMAGE_URL"
           if [[ $IMAGE_NAME =~ ^rhel-bootc || $IMAGE_NAME =~ ^centos-bootc || $IMAGE_NAME =~ ^fedora-bootc ]]; then
-            REDHAT_ID=$(jq -r '.Labels.redhat.id' skopeo_inspect.json)
+            REDHAT_ID=$(jq -r '.Labels."redhat.id"' skopeo_inspect.json)
             REDHAT_VERSION_ID=$(jq -r '.Labels."redhat.version-id"' skopeo_inspect.json)
             if [[ "${REDHAT_ID}" == "rhel" ]]; then
               COMPOSE=RHEL-${REDHAT_VERSION_ID}.0-Nightly
