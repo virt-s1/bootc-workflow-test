@@ -52,9 +52,11 @@ function image_inspect {
     if [[ ${TIER1_IMAGE_URL} =~ fedora-bootc:40 ]]; then
         REDHAT_ID="fedora"
         REDHAT_VERSION_ID="40"
+        CURRENT_COMPOSE_ID=""
     elif [[ ${TIER1_IMAGE_URL} =~ fedora-bootc:41 ]]; then
         REDHAT_ID="fedora"
         REDHAT_VERSION_ID="41"
+        CURRENT_COMPOSE_ID=""
     elif [[ ${TIER1_IMAGE_URL} =~ bootc-image-builder ]]; then
         VERSION=$(skopeo inspect --tls-verify=false --creds "$QUAY_USERNAME":"$QUAY_PASSWORD" docker://"${TIER1_IMAGE_URL}" | jq -r '.Labels.version')
         REDHAT_ID=$(skopeo inspect --tls-verify=false docker://"${RHEL_REGISTRY_URL}/rhel9-rhel_bootc:rhel-${VERSION}" | jq -r '.Labels."redhat.id"')
