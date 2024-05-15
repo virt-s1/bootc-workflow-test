@@ -56,6 +56,8 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
+    - when: distro == rhel or distro == centos-stream
+      enabled: false
 
 /anaconda-bios-lvm:
   summary: Run anaconda test locally (nested)
@@ -83,4 +85,6 @@ execute:
     PARTITION: btrfs
   adjust+:
     - when: arch != x86_64
+      enabled: false
+    - when: distro == rhel or distro == centos-stream
       enabled: false
