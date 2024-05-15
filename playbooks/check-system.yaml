@@ -582,7 +582,7 @@
           reboot:
             post_reboot_delay: 60
             pre_reboot_delay: 60
-            reboot_timeout: 1200
+            reboot_timeout: 1800
           become: true
           ignore_errors: true
 
