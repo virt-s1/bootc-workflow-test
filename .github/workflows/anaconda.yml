@@ -82,7 +82,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel95-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -115,7 +115,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel94-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -148,7 +148,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=centos-stream"
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -181,7 +181,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=centos-stream"
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-dev-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -214,7 +214,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=fedora"
           update_pull_request_status: true
           pull_request_status_name: "bootc-fedora-40-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -248,7 +248,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=fedora"
           update_pull_request_status: true
           pull_request_status_name: "bootc-fedora-41-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
@@ -282,7 +282,7 @@ jobs:
           git_url: ${{ needs.pr-info.outputs.repo_url }}
           git_ref: ${{ needs.pr-info.outputs.ref }}
           arch: ${{ matrix.arch }}
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel9y-snapshot-anaconda-${{ matrix.arch }}"
           tmt_plan_regex: "/anaconda/"
