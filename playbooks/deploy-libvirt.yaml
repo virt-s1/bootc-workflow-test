@@ -94,7 +94,7 @@
 
     - name: Download CentOS-Stream-GenericCloud image
       get_url:
-        url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/x86_64/images/{{ download_image_name }}"
+        url: "https://composes.stream.centos.org/production/latest-CentOS-Stream/compose/BaseOS/{{ arch }}/images/{{ download_image_name }}"
         dest: "{{ image_path }}/{{ rhel_guest_image_fname }}"
         validate_certs: false
       become: true
