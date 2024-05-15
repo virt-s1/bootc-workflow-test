@@ -171,7 +171,7 @@ execute:
             processors: ">= 2"
           memory: ">= 6 GB"
           disk:
-            - size: '>= 100 GB'
+            - size: '>= 40 GB'
           virtualization:
             is-supported: true
 
