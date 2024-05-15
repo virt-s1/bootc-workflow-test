@@ -104,15 +104,13 @@ esac
 greenprint "Configure container build arch"
 if [[ "$CROSS_ARCH" == "True" ]]; then
     if [[ "$ARCH" == "x86_64" ]]; then
-        BUILD_ARCH="aarch64"
+        ARCH="aarch64"
     else
-        BUILD_ARCH="x86_64"
+        ARCH="x86_64"
     fi
-else
-    BUILD_ARCH="$ARCH"
 fi
 
-case "$BUILD_ARCH" in
+case "$ARCH" in
     "x86_64")
         BUILD_PLATFORM="linux/amd64"
         ;;
@@ -206,7 +204,7 @@ case "$IMAGE_TYPE" in
                 --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
                 "$BIB_IMAGE_URL" \
                 --type ami \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
@@ -225,7 +223,7 @@ case "$IMAGE_TYPE" in
                 --env AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
                 "$BIB_IMAGE_URL" \
                 --type ami \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --aws-ami-name "$AMI_NAME" \
                 --aws-bucket "$AWS_BUCKET_NAME" \
                 --aws-region "$AWS_REGION" \
@@ -266,7 +264,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --local \
                 "$LOCAL_IMAGE_URL"
@@ -282,7 +280,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
@@ -332,7 +330,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type vmdk \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --local \
                 "$LOCAL_IMAGE_URL"
         else
@@ -347,7 +345,7 @@ case "$IMAGE_TYPE" in
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type vmdk \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
         fi
@@ -480,7 +478,7 @@ EOF
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --local \
                 "$LOCAL_IMAGE_URL"
@@ -496,7 +494,7 @@ EOF
                 -v /var/lib/containers/storage:/var/lib/containers/storage \
                 "$BIB_IMAGE_URL" \
                 --type "$IMAGE_TYPE" \
-                --target-arch "$BUILD_ARCH" \
+                --target-arch "$ARCH" \
                 --chown "$(id -u "$(whoami)"):$(id -g "$(whoami)")" \
                 --rootfs "$ROOTFS" \
                 "$TEST_IMAGE_URL"
