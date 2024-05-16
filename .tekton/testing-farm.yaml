@@ -153,8 +153,10 @@ spec:
             BASE_IMAGE_VERSION=$(jq -r '.Labels.version' skopeo_inspect.json)
             if [[ ${BASE_IMAGE_NAME} =~ ^ubi ]]; then
               COMPOSE=RHEL-${BASE_IMAGE_VERSION}.0-Nightly
+              DISTRO=rhel
             else
               COMPOSE=Fedora-Rawhide
+              DISTRO=fedora
             fi
           else
             echo "Error: unknown container image name: $IMAGE_NAME"
