@@ -85,7 +85,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel95-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL95_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
@@ -120,7 +120,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel94-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL94_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
@@ -155,7 +155,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=centos-stream"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
@@ -191,7 +191,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-cs9-dev-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=centos-stream"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.CS9_DEV_TIER1_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
@@ -225,7 +225,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-fedora-40-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=fedora"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
@@ -259,7 +259,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-fedora-41-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=fedora"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }}"
@@ -294,7 +294,7 @@ jobs:
           arch: ${{ matrix.arch }}
           update_pull_request_status: true
           pull_request_status_name: "bootc-rhel9y-snapshot-bib-${{ matrix.arch }}"
-          tmt_context: "arch=${{ matrix.arch }}"
+          tmt_context: "arch=${{ matrix.arch }};distro=rhel"
           tmt_plan_regex: "/bib-image/"
           tf_scope: private
           secrets: "TIER1_IMAGE_URL=${{ secrets.RHEL9Y_SNAPSHOT_IMAGE_URL }};QUAY_USERNAME=${{ secrets.QUAY_USERNAME }};QUAY_PASSWORD=${{ secrets.QUAY_PASSWORD }};QUAY_SECRET=${{ secrets.QUAY_SECRET }};DOWNLOAD_NODE=${{ secrets.DOWNLOAD_NODE }};AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }};AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }};GOVC_URL=${{ secrets.GOVC_URL }};GOVC_USERNAME=${{ secrets.GOVC_USERNAME }};GOVC_PASSWORD=${{ secrets.GOVC_PASSWORD }};RHC_AK=${{ secrets.RHC_AK }};RHC_ORGID=${{ secrets.RHC_ORGID }};RHEL_REGISTRY_URL=${{ secrets.RHEL_REGISTRY_URL }}"
