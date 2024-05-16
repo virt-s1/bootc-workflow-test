@@ -202,6 +202,6 @@ spec:
           --context "arch=${ARCH}" \
           --context "distro=${DISTRO}" \
           --timeout "${TIMEOUT}"
-      # default to 60m, extend to 90m
+      # TaskRun default to 120m, extend Task to 120m
       # https://tekton.dev/docs/pipelines/tasks/#specifying-a-timeout
-      timeout: "1h30m"
+      timeout: "2h"
