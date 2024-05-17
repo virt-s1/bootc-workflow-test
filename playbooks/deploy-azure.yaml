@@ -156,7 +156,7 @@
         az sig image-version list-community \
           --public-gallery-name fedora-5e266ba4-2250-406d-adad-5d73860d958f \
           --gallery-image-definition {{ fedora_community_gallery_image_name[test_os][arch] }} \
-          --location {{ location }} | jq -r '.[-1].uniqueId'
+          --location {{ location }} | jq -r '.[0].uniqueId'
       register: image_id_result
       when: "'fedora' in test_os"
 
