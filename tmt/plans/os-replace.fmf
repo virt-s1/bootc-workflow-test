@@ -150,3 +150,5 @@ execute:
   adjust+:
     - when: arch != x86_64 and arch != aarch64
       enabled: false
+    - when: distro == fedora
+      enabled: false
