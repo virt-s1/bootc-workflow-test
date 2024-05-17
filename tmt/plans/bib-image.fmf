@@ -42,6 +42,10 @@ execute:
   adjust+:
     - when: arch != x86_64
       enabled: false
+    - when: distro != fedora
+      enabled: false
+      because: only run this test on fedora
+      continue: true
     - when: arch == x86_64 or arch == aarch64
       provision+:
         hardware:
