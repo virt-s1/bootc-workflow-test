@@ -91,7 +91,7 @@ execute:
 
 /libvirt:
   summary: Run os-replace test locally (nested)
-  tag: [libvirt, stable]
+  tag: [libvirt, stable, fedora]
   environment+:
     PLATFORM: libvirt
     LAYERED_IMAGE: qemu-guest-agent
