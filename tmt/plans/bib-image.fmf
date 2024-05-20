@@ -83,7 +83,7 @@ execute:
 
 /qcow2:
   summary: Use bib generate qcow2 image and test locally (nested)
-  tag: [libvirt, stable, bib]
+  tag: [libvirt, stable, bib, fedora]
   environment+:
     CROSS_ARCH: False
     PLATFORM: libvirt

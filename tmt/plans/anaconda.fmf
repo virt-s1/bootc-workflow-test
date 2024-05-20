@@ -50,6 +50,7 @@ execute:
 
 /anaconda-uefi-btrfs:
   summary: Run anaconda test locally (nested)
+  tag: fedora
   environment+:
     FIRMWARE: uefi
     PARTITION: btrfs
@@ -80,6 +81,7 @@ execute:
 
 /anaconda-bios-btrfs:
   summary: Run anaconda test locally (nested)
+  tag: fedora
   environment+:
     FIRMWARE: bios
     PARTITION: btrfs
