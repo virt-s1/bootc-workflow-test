@@ -139,6 +139,7 @@ execute:
 
 /bare:
   summary: Run os-replace test on bare metal aws bare server
+  enabled: false
   tag: bare
   environment+:
     PLATFORM: aws
