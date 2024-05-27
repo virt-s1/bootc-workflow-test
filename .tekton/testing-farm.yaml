@@ -133,7 +133,7 @@ spec:
 
         export TESTING_FARM_API_TOKEN=$(cat /etc/secrets/testing-farm-token)
 
-        apk add skopeo jq
+        apk add skopeo jq curl
 
         PR_NAME="${HOSTNAME%-pod}"
         GITLAB_URL="${SNAPSHOT}" | jq -r '.components[].source.git.url'
