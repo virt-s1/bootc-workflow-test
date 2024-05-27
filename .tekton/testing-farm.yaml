@@ -118,6 +118,16 @@ spec:
             secretKeyRef:
               name: "bootc-workflow-test-secret"
               key: "AZURE_SECRET"
+        - name: GITLAB_PAT
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-additional"
+              key: "GITLAB_PAT"
+        - name: SLACK_INCOMING_WEBHOOK
+          valueFrom:
+            secretKeyRef:
+              name: "bootc-workflow-test-additional"
+              key: "SLACK_INCOMING_WEBHOOK"
       script: |
         #!/usr/bin/env bash
 
@@ -125,10 +135,9 @@ spec:
 
         apk add skopeo jq
 
-        echo "== env =="
-        env
-        echo "========="
-        echo "${SNAPSHOT}"
+        PR_NAME="${HOSTNAME%-pod}"
+        GITLAB_URL="${SNAPSHOT}" | jq -r '.components[].source.git.url'
+        GITLAB_REVISION="${SNAPSHOT}" | jq -r '.components[].source.git.revision'
         IMAGES=$(echo "${SNAPSHOT}" | jq -r '.components[].containerImage')
         COUNT=0
         for IMAGE in $IMAGES; do
@@ -205,7 +214,45 @@ spec:
           --arch "${ARCH}" \
           --context "arch=${ARCH}" \
           --context "distro=${DISTRO}" \
-          --timeout "${TIMEOUT}"
+          --timeout "${TIMEOUT}" \
+          --no-wait | tee tf_stdout.txt
+
+        R_ID=$(grep -oP '(?<=https://api.dev.testing-farm.io/v0.1/requests/)[0-9a-z-]+' tf_stdout.txt)
+        TF_ARTIFACTS_URL="http://artifacts.osci.redhat.com/testing-farm/${R_ID}"
+
+        P_ID=$(curl -s --header "Private-Token: ${GITLAB_PAT}" -X GET "https://gitlab.com/api/v4/projects?search=$(basename ${GITLAB_URL})" | jq -r ".[]|select(.web_url==\"${GITLAB_URL%/}\")|.id")
+        IID=$(curl -s --header "Private-Token: ${GITLAB_PAT}" -X GET "https://gitlab.com/api/v4/projects/${P_ID}/merge_requests" | jq -r ".[]|select(.sha==\"${GITLAB_REVISION}\")|.iid")
+        if [[ -n ${IID} ]]; then
+          curl -s --header "Private-Token: ${GITLAB_PAT}" -X POST "https://gitlab.com/api/v4/projects/${P_ID}/merge_requests/${IID}/notes" \
+            --header "Content-Type: application/json" \
+            --data-raw "{ \"body\": \"[Sent by program]<br />$PR_NAME<br />$GITLAB_URL<br />$GITLAB_REVISION<br />$TF_ARTIFACTS_URL\" }"
+        else
+          IID=$(curl -s --header "Private-Token: ${GITLAB_PAT}" -X GET "https://gitlab.com/api/v4/projects/${P_ID}/merge_requests" | jq -r ".[]|select(.merge_commit_sha==\"${GITLAB_REVISION}\")|.iid")
+          curl -s -X POST "${SLACK_INCOMING_WEBHOOK}" \
+            --header "Content-Type: application/json" \
+            --data-raw "{ \"text\": \"$PR_NAME\n$GITLAB_URL\n$GITLAB_REVISION\n$TF_ARTIFACTS_URL\" }"
+        fi
+
+        PREV_STATE="none"
+        while true; do
+          STATE=$(curl --retry 10 --retry-connrefused --connect-timeout 10 --retry-delay 30 -s "https://api.dev.testing-farm.io/v0.1/requests/$R_ID" | jq -r '.state')
+          if [ "$STATE" = "complete" ] || [ "$STATE" = "error" ]; then
+            echo "Done! The current state is \"$STATE\"."
+            break
+          fi
+          if [ "$STATE" != "$PREV_STATE" ]; then
+            echo "The current state is \"$STATE\"."
+            echo "Waiting for Testing Farm..."
+          fi
+          PREV_STATE="$STATE"
+          sleep 90
+        done
+
+        TF_ARTIFACTS_URL=$(curl -sk "https://api.dev.testing-farm.io/v0.1/requests/$R_ID" | jq -r '.run.artifacts')
+        echo "Artifacts URL is \"$TF_ARTIFACTS_URL\""
+        OVERALL_RESULT=$(curl -sk "https://api.dev.testing-farm.io/v0.1/requests/$R_ID" | jq -r '.result.overall')
+        echo "Test result is \"$OVERALL_RESULT\""
+        [[ "$OVERALL_RESULT" != "passed" ]] && exit 1
       # TaskRun default to 120m, extend Task to 120m
       # https://tekton.dev/docs/pipelines/tasks/#specifying-a-timeout
       timeout: "2h"
