@@ -285,6 +285,42 @@
             failed_counter: "{{ failed_counter | int + 1 }}"
       when: composefs == "true"
 
+    - name: get root partition path
+      shell: findmnt -vno SOURCE /sysroot
+      register: root_partition_path
+      ignore_errors: true
+
+    - name: check growfs
+      block:
+        - name: get root device name
+          shell: lsblk -no pkname /dev/`basename {{ root_partition_path.stdout }}`
+          register: root_device_name
+
+        - name: get root partition size
+          shell: df -h /sysroot | awk 'NR==2{print $2}'
+          register: root_partition_size
+
+        - name: get root disk size
+          shell: lsblk -l /dev/{{ root_device_name.stdout }} | grep -w ^{{ root_device_name.stdout }} | awk '{print $4}'
+          register: root_disk_size
+
+        - set_fact:
+            root_percentage: "{{ (root_partition_size.stdout | regex_replace('([A-Z])$', '') | int) * 100 / (root_disk_size.stdout | regex_replace('([A-Z])$', '') | int) }}"
+
+        - assert:
+            that:
+              - root_percentage | int >= 85
+            fail_msg: "{{ root_partition_size.stdout }} IS NOT installed"
+            success_msg: "{{ root_partition_size.stdout }}/{{ root_disk_size.stdout }} = {{ root_percentage }} >= 85%"
+      always:
+        - set_fact:
+            total_counter: "{{ total_counter | int + 1 }}"
+      rescue:
+        - name: failed count + 1
+          set_fact:
+            failed_counter: "{{ failed_counter | int + 1 }}"
+      when: "'/dev/mapper/' not in root_partition_path.stdout and '/dev/' in root_partition_path.stdout"
+
     - name: check VERSION_ID in /etc/os-release
       shell: awk -F '=' '/^VERSION_ID/ {print $2}' /etc/os-release | tr -d '"'
       register: result_os_release_version_id
