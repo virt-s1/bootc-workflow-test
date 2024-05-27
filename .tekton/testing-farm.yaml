@@ -125,6 +125,10 @@ spec:
 
         apk add skopeo jq
 
+        echo "== env =="
+        env
+        echo "========="
+        echo "${SNAPSHOT}"
         IMAGES=$(echo "${SNAPSHOT}" | jq -r '.components[].containerImage')
         COUNT=0
         for IMAGE in $IMAGES; do
